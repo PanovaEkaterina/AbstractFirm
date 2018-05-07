@@ -104,7 +104,7 @@
             this.Name = "FormProductComponent";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Бланк пакета документов";
-            this.Load += new System.EventHandler(this.FormProductComponent_Load);
+            this.Load += new System.EventHandler(this.FormPackageBlank_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 

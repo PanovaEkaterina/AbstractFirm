@@ -4,6 +4,7 @@ using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AbstractFirmService.ImplementationsList
 {
@@ -18,48 +19,38 @@ namespace AbstractFirmService.ImplementationsList
 
         public List<LawyerViewModel> GetList()
         {
-            List<LawyerViewModel> result = new List<LawyerViewModel>();
-            for (int i = 0; i < source.Lawyers.Count; ++i)
-            {
-                result.Add(new LawyerViewModel
+            List<LawyerViewModel> result = source.Lawyers
+                .Select(rec => new LawyerViewModel
                 {
-                    Id = source.Lawyers[i].Id,
-                    LawyerFIO = source.Lawyers[i].LawyerFIO
-                });
-            }
+                    Id = rec.Id,
+                    LawyerFIO = rec.LawyerFIO
+                })
+                .ToList();
             return result;
         }
 
         public LawyerViewModel GetElement(int id)
         {
-            for (int i = 0; i < source.Lawyers.Count; ++i)
+            Lawyer element = source.Lawyers.FirstOrDefault(rec => rec.Id == id);
+            if (element != null)
             {
-                if (source.Lawyers[i].Id == id)
+                return new LawyerViewModel
                 {
-                    return new LawyerViewModel
-                    {
-                        Id = source.Lawyers[i].Id,
-                        LawyerFIO = source.Lawyers[i].LawyerFIO
-                    };
-                }
+                    Id = element.Id,
+                    LawyerFIO = element.LawyerFIO
+                };
             }
             throw new Exception("Элемент не найден");
         }
 
         public void AddElement(LawyerBindingModel model)
         {
-            int maxId = 0;
-            for (int i = 0; i < source.Lawyers.Count; ++i)
+            Lawyer element = source.Lawyers.FirstOrDefault(rec => rec.LawyerFIO == model.LawyerFIO);
+            if (element != null)
             {
-                if (source.Lawyers[i].Id > maxId)
-                {
-                    maxId = source.Lawyers[i].Id;
-                }
-                if (source.Lawyers[i].LawyerFIO == model.LawyerFIO)
-                {
-                    throw new Exception("Уже есть сотрудник с таким ФИО");
-                }
+                throw new Exception("Уже есть сотрудник с таким ФИО");
             }
+            int maxId = source.Lawyers.Count > 0 ? source.Lawyers.Max(rec => rec.Id) : 0;
             source.Lawyers.Add(new Lawyer
             {
                 Id = maxId + 1,
@@ -69,37 +60,31 @@ namespace AbstractFirmService.ImplementationsList
 
         public void UpdElement(LawyerBindingModel model)
         {
-            int index = -1;
-            for (int i = 0; i < source.Lawyers.Count; ++i)
+            Lawyer element = source.Lawyers.FirstOrDefault(rec =>
+                                        rec.LawyerFIO == model.LawyerFIO && rec.Id != model.Id);
+            if (element != null)
             {
-                if (source.Lawyers[i].Id == model.Id)
-                {
-                    index = i;
-                }
-                if (source.Lawyers[i].LawyerFIO == model.LawyerFIO &&
-                    source.Lawyers[i].Id != model.Id)
-                {
-                    throw new Exception("Уже есть сотрудник с таким ФИО");
-                }
+                throw new Exception("Уже есть сотрудник с таким ФИО");
             }
-            if (index == -1)
+            element = source.Lawyers.FirstOrDefault(rec => rec.Id == model.Id);
+            if (element == null)
             {
                 throw new Exception("Элемент не найден");
             }
-            source.Lawyers[index].LawyerFIO = model.LawyerFIO;
+            element.LawyerFIO = model.LawyerFIO;
         }
 
         public void DelElement(int id)
         {
-            for (int i = 0; i < source.Lawyers.Count; ++i)
+            Lawyer element = source.Lawyers.FirstOrDefault(rec => rec.Id == id);
+            if (element != null)
             {
-                if (source.Lawyers[i].Id == id)
-                {
-                    source.Lawyers.RemoveAt(i);
-                    return;
-                }
+                source.Lawyers.Remove(element);
             }
-            throw new Exception("Элемент не найден");
+            else
+            {
+                throw new Exception("Элемент не найден");
+            }
         }
     }
 }

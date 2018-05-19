@@ -1,7 +1,6 @@
 ﻿using AbstractFirmService.BindingModel;
 using AbstractFirmService.ViewModel;
 using System;
-using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -24,19 +23,15 @@ namespace AbstractFirmView
             {
                 try
                 {
-                    var response = APIKlient.GetRequest("api/Blank/Get/" + id.Value);
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        var blank = APIKlient.GetElement<BlankViewModel>(response);
-                        textBoxName.Text = blank.BlankName;
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
-                    }
+                    var component = Task.Run(() => APIKlient.GetRequestData<BlankViewModel>("api/Blank/Get/" + id.Value)).Result;
+                    textBoxName.Text = component.BlankName;
                 }
                 catch (Exception ex)
                 {
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -49,44 +44,41 @@ namespace AbstractFirmView
                 MessageBox.Show("Заполните название", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            try
+            string name = textBoxName.Text;
+            Task task;
+            if (id.HasValue)
             {
-                Task<HttpResponseMessage> response;
-                if (id.HasValue)
+                task = Task.Run(() => APIKlient.PostRequestData("api/Blank/UpdElement", new BlankBindingModel
                 {
-                    response = APIKlient.PostRequest("api/Blank/UpdElement", new BlankBindingModel
-                    {
-                        Id = id.Value,
-                        BlankName = textBoxName.Text
-                    });
-                }
-                else
-                {
-                    response = APIKlient.PostRequest("api/Blank/AddElement", new BlankBindingModel
-                    {
-                        BlankName = textBoxName.Text
-                    });
-                }
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
+                    Id = id.Value,
+                    BlankName = name
+                }));
             }
-            catch (Exception ex)
+            else
             {
+                task = Task.Run(() => APIKlient.PostRequestData("api/Blank/AddElement", new BlankBindingModel
+                {
+                    BlankName = name
+                }));
+            }
+
+            task.ContinueWith((prevTask) => MessageBox.Show("Сохранение прошло успешно. Обновите список", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+            task.ContinueWith((prevTask) =>
+            {
+                var ex = (Exception)prevTask.Exception;
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            }, TaskContinuationOptions.OnlyOnFaulted);
+
+            Close();
         }
 
         private void buttonCancel_Click(object sender, EventArgs e)
         {
-            DialogResult = DialogResult.Cancel;
             Close();
         }
     }

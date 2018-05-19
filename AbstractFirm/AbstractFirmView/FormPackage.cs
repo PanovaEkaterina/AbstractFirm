@@ -2,7 +2,6 @@
 using AbstractFirmService.ViewModel;
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -27,22 +26,18 @@ namespace AbstractFirmView
             {
                 try
                 {
-                    var response = APIKlient.GetRequest("api/Package/Get/" + id.Value);
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        var product = APIKlient.GetElement<PackageViewModel>(response);
-                        textBoxName.Text = product.PackageName;
-                        textBoxPrice.Text = product.Price.ToString();
-                        productComponents = product.PackageBlanks;
-                        LoadData();
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
-                    }
+                    var product = Task.Run(() => APIKlient.GetRequestData<PackageViewModel>("api/PackageProduct/Get/" + id.Value)).Result;
+                    textBoxName.Text = product.PackageName;
+                    textBoxPrice.Text = product.Price.ToString();
+                    productComponents = product.PackageBlanks;
+                    LoadData();
                 }
                 catch (Exception ex)
                 {
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -141,62 +136,60 @@ namespace AbstractFirmView
             }
             if (productComponents == null || productComponents.Count == 0)
             {
-                MessageBox.Show("Заполните компоненты", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Заполните бланки", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            try
+            List<PackageBlankBindingModel> productComponentBM = new List<PackageBlankBindingModel>();
+            for (int i = 0; i < productComponents.Count; ++i)
             {
-                List<PackageBlankBindingModel> productComponentBM = new List<PackageBlankBindingModel>();
-                for (int i = 0; i < productComponents.Count; ++i)
+                productComponentBM.Add(new PackageBlankBindingModel
                 {
-                    productComponentBM.Add(new PackageBlankBindingModel
-                    {
-                        Id = productComponents[i].Id,
-                        PackageId = productComponents[i].PackageId,
-                        BlankId = productComponents[i].BlankId,
-                        Count = productComponents[i].Count
-                    });
-                }
-                Task<HttpResponseMessage> response;
-                if (id.HasValue)
-                {
-                    response = APIKlient.PostRequest("api/Package/UpdElement", new PackageBindingModel
-                    {
-                        Id = id.Value,
-                        PackageName = textBoxName.Text,
-                        Price = Convert.ToInt32(textBoxPrice.Text),
-                        PackageBlanks = productComponentBM
-                    });
-                }
-                else
-                {
-                    response = APIKlient.PostRequest("api/Package/AddElement", new PackageBindingModel
-                    {
-                        PackageName = textBoxName.Text,
-                        Price = Convert.ToInt32(textBoxPrice.Text),
-                        PackageBlanks = productComponentBM
-                    });
-                }
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
+                    Id = productComponents[i].Id,
+                    PackageId = productComponents[i].PackageId,
+                    BlankId = productComponents[i].BlankId,
+                    Count = productComponents[i].Count
+                });
             }
-            catch (Exception ex)
+            string name = textBoxName.Text;
+            int price = Convert.ToInt32(textBoxPrice.Text);
+            Task task;
+            if (id.HasValue)
             {
+                task = Task.Run(() => APIKlient.PostRequestData("api/Package/UpdElement", new PackageBindingModel
+                {
+                    Id = id.Value,
+                    PackageName = name,
+                    Price = price,
+                    PackageBlanks = productComponentBM
+                }));
+            }
+            else
+            {
+                task = Task.Run(() => APIKlient.PostRequestData("api/Package/AddElement", new PackageBindingModel
+                {
+                    PackageName = name,
+                    Price = price,
+                    PackageBlanks = productComponentBM
+                }));
+            }
+
+            task.ContinueWith((prevTask) => MessageBox.Show("Сохранение прошло успешно. Обновите список", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+            task.ContinueWith((prevTask) =>
+            {
+                var ex = (Exception)prevTask.Exception;
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            }, TaskContinuationOptions.OnlyOnFaulted);
+
+            Close();
         }
 
         private void buttonCancel_Click(object sender, EventArgs e)
         {
-            DialogResult = DialogResult.Cancel;
             Close();
         }
     }

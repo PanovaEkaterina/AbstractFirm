@@ -1,6 +1,7 @@
 ﻿using AbstractFirmService.ViewModel;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace AbstractFirmView
@@ -20,21 +21,17 @@ namespace AbstractFirmView
         {
             try
             {
-                var response = APIKlient.GetRequest("api/Blank/GetList");
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    comboBoxComponent.DisplayMember = "BlankName";
-                    comboBoxComponent.ValueMember = "Id";
-                    comboBoxComponent.DataSource = APIKlient.GetElement<List<BlankViewModel>>(response);
-                    comboBoxComponent.SelectedItem = null;
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
+                comboBoxComponent.DisplayMember = "BlankName";
+                comboBoxComponent.ValueMember = "Id";
+                comboBoxComponent.DataSource = Task.Run(() => APIKlient.GetRequestData<List<BlankViewModel>>("api/Blank/GetList")).Result;
+                comboBoxComponent.SelectedItem = null;
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             if (model != null)
@@ -54,7 +51,7 @@ namespace AbstractFirmView
             }
             if (comboBoxComponent.SelectedValue == null)
             {
-                MessageBox.Show("Выберите компонент", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Выберите бланк", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             try

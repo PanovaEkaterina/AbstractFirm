@@ -30,6 +30,8 @@ namespace AbstractFirmService
 
         public virtual DbSet<ArchiveBlank> ArchiveBlanks { get; set; }
 
+        public virtual DbSet<MessageInfo> MessageInfos { get; set; }
+
         public override int SaveChanges()
         {
             try

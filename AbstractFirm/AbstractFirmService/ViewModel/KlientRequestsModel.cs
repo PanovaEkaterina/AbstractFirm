@@ -22,5 +22,6 @@ namespace AbstractFirmService.ViewModel
 
         [DataMember]
         public string Status { get; set; }
+                
     }
 }

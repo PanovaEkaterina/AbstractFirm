@@ -132,6 +132,7 @@
     <Compile Include="Controllers\KlientController.cs" />
     <Compile Include="Controllers\LawyerController.cs" />
     <Compile Include="Controllers\MainController.cs" />
+    <Compile Include="Controllers\MessageInfoController.cs" />
     <Compile Include="Controllers\PackageController.cs" />
     <Compile Include="Controllers\ReportController.cs" />
     <Compile Include="Global.asax.cs">

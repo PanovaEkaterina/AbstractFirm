@@ -1,4 +1,5 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace AbstractFirmService.ViewModel
 {
@@ -10,5 +11,11 @@ namespace AbstractFirmService.ViewModel
 
         [DataMember]
         public string KlientFIO { get; set; }
+
+        [DataMember]
+        public string Mail { get; set; }
+
+        [DataMember]
+        public List<MessageInfoViewModel> Messages { get; set; }
     }
 }

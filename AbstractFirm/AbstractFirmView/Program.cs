@@ -12,6 +12,7 @@ namespace AbstractFirmView
         static void Main()
         {
             APIKlient.Connect();
+            MailKlient.Connect();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new FormMain());

@@ -114,7 +114,6 @@
 			this.reportViewer.ServerReport.BearerToken = null;
 			this.reportViewer.Size = new System.Drawing.Size(884, 526);
 			this.reportViewer.TabIndex = 1;
-			this.reportViewer.Load += new System.EventHandler(this.reportViewer_Load);
 			// 
 			// FormKlientRequests
 			// 
@@ -126,7 +125,6 @@
 			this.Name = "FormKlientRequests";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "Заказы клиентов";
-			this.Load += new System.EventHandler(this.FormKlientRequests_Load);
 			this.panel.ResumeLayout(false);
 			this.panel.PerformLayout();
 			this.ResumeLayout(false);

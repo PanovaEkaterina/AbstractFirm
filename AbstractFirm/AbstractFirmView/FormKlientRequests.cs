@@ -89,14 +89,5 @@ namespace AbstractFirmView
             }
         }
 
-        private void reportViewer_Load(object sender, EventArgs e)
-		{
-
-		}
-
-		private void FormKlientRequests_Load(object sender, EventArgs e)
-		{
-
-		}
 	}
 }

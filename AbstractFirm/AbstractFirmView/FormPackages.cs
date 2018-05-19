@@ -1,20 +1,28 @@
-﻿using AbstractFirmService.BindingModel;
+﻿using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
-
+using Unity;
+using Unity.Attributes;
 
 namespace AbstractFirmView
 {
     public partial class FormPackages : Form
     {
-        public FormPackages()
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
+        private readonly IPackageService service;
+
+        public FormPackages(IPackageService service)
         {
             InitializeComponent();
+            this.service = service;
         }
 
-        private void FormPackages_Load(object sender, EventArgs e)
+        private void FormProducts_Load(object sender, EventArgs e)
         {
             LoadData();
         }
@@ -23,20 +31,12 @@ namespace AbstractFirmView
         {
             try
             {
-                var response = APIKlient.GetRequest("api/Package/GetList");
-                if (response.Result.IsSuccessStatusCode)
+                List<PackageViewModel> list = service.GetList();
+                if (list != null)
                 {
-                    List<PackageViewModel> list = APIKlient.GetElement<List<PackageViewModel>>(response);
-                    if (list != null)
-                    {
-                        dataGridView.DataSource = list;
-                        dataGridView.Columns[0].Visible = false;
-                        dataGridView.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                    }
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
+                    dataGridView.DataSource = list;
+                    dataGridView.Columns[0].Visible = false;
+                    dataGridView.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 }
             }
             catch (Exception ex)
@@ -47,7 +47,7 @@ namespace AbstractFirmView
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            var form = new FormPackage();
+            var form = Container.Resolve<FormPackage>();
             if (form.ShowDialog() == DialogResult.OK)
             {
                 LoadData();
@@ -58,7 +58,7 @@ namespace AbstractFirmView
         {
             if (dataGridView.SelectedRows.Count == 1)
             {
-                var form = new FormPackage();
+                var form = Container.Resolve<FormPackage>();
                 form.Id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value);
                 if (form.ShowDialog() == DialogResult.OK)
                 {
@@ -76,11 +76,7 @@ namespace AbstractFirmView
                     int id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value);
                     try
                     {
-                        var response = APIKlient.PostRequest("api/Package/DelElement", new KlientBindingModel { Id = id });
-                        if (!response.Result.IsSuccessStatusCode)
-                        {
-                            throw new Exception(APIKlient.GetError(response));
-                        }
+                        service.DelElement(id);
                     }
                     catch (Exception ex)
                     {

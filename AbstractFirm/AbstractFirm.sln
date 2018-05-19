@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AbstractFirmService", "Abst
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AbstractFirmView", "AbstractFirmView\AbstractFirmView.csproj", "{BA1B7298-B172-44A1-BBFC-581D780D084E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AbstractFirmRestApi", "AbstractFirmRestApi\AbstractFirmRestApi.csproj", "{F3219017-75F2-4FDA-AC57-6A8CDB439003}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,10 +27,6 @@ Global
 		{BA1B7298-B172-44A1-BBFC-581D780D084E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BA1B7298-B172-44A1-BBFC-581D780D084E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BA1B7298-B172-44A1-BBFC-581D780D084E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F3219017-75F2-4FDA-AC57-6A8CDB439003}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F3219017-75F2-4FDA-AC57-6A8CDB439003}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F3219017-75F2-4FDA-AC57-6A8CDB439003}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F3219017-75F2-4FDA-AC57-6A8CDB439003}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

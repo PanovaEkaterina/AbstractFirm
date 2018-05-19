@@ -1,21 +1,27 @@
 ﻿using AbstractFirmService.BindingModel;
+using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
 using System;
-using System.Net.Http;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace AbstractFirmView
 {
     public partial class FormBlank : Form
     {
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
         public int Id { set { id = value; } }
 
-        private int? id;
+        private readonly IBlankService service;
 
-        public FormBlank()
+        private int? id;
+        public FormBlank(IBlankService service)
         {
             InitializeComponent();
+            this.service = service;
         }
 
         private void FormBlank_Load(object sender, EventArgs e)
@@ -24,15 +30,10 @@ namespace AbstractFirmView
             {
                 try
                 {
-                    var response = APIKlient.GetRequest("api/Blank/Get/" + id.Value);
-                    if (response.Result.IsSuccessStatusCode)
+                    BlankViewModel view = service.GetElement(id.Value);
+                    if (view != null)
                     {
-                        var blank = APIKlient.GetElement<BlankViewModel>(response);
-                        textBoxName.Text = blank.BlankName;
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
+                        textBoxName.Text = view.BlankName;
                     }
                 }
                 catch (Exception ex)
@@ -51,10 +52,9 @@ namespace AbstractFirmView
             }
             try
             {
-                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    response = APIKlient.PostRequest("api/Blank/UpdElement", new BlankBindingModel
+                    service.UpdElement(new BlankBindingModel
                     {
                         Id = id.Value,
                         BlankName = textBoxName.Text
@@ -62,21 +62,14 @@ namespace AbstractFirmView
                 }
                 else
                 {
-                    response = APIKlient.PostRequest("api/Blank/AddElement", new BlankBindingModel
+                    service.AddElement(new BlankBindingModel
                     {
                         BlankName = textBoxName.Text
                     });
                 }
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
+                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                DialogResult = DialogResult.OK;
+                Close();
             }
             catch (Exception ex)
             {

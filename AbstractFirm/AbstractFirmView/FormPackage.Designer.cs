@@ -178,7 +178,7 @@
             this.Name = "FormProduct";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Пакет документов";
-            this.Load += new System.EventHandler(this.FormPackage_Load);
+            this.Load += new System.EventHandler(this.FormProduct_Load);
             this.groupBoxComponents.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView)).EndInit();
             this.ResumeLayout(false);

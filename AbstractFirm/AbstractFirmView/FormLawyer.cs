@@ -1,21 +1,28 @@
 ﻿using AbstractFirmService.BindingModel;
+using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
 using System;
-using System.Net.Http;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace AbstractFirmView
 {
     public partial class FormLawyer : Form
     {
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
         public int Id { set { id = value; } }
+
+        private readonly ILawyerService service;
 
         private int? id;
 
-        public FormLawyer()
+        public FormLawyer(ILawyerService service)
         {
             InitializeComponent();
+            this.service = service;
         }
 
         private void FormLawyer_Load(object sender, EventArgs e)
@@ -24,15 +31,10 @@ namespace AbstractFirmView
             {
                 try
                 {
-                    var response = APIKlient.GetRequest("api/Lawyer/Get/" + id.Value);
-                    if (response.Result.IsSuccessStatusCode)
+                    LawyerViewModel view = service.GetElement(id.Value);
+                    if (view != null)
                     {
-                        var Lawyer = APIKlient.GetElement<LawyerViewModel>(response);
-                        textBoxFIO.Text = Lawyer.LawyerFIO;
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
+                        textBoxFIO.Text = view.LawyerFIO;
                     }
                 }
                 catch (Exception ex)
@@ -51,10 +53,9 @@ namespace AbstractFirmView
             }
             try
             {
-                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    response = APIKlient.PostRequest("api/Lawyer/UpdElement", new LawyerBindingModel
+                    service.UpdElement(new LawyerBindingModel
                     {
                         Id = id.Value,
                         LawyerFIO = textBoxFIO.Text
@@ -62,21 +63,14 @@ namespace AbstractFirmView
                 }
                 else
                 {
-                    response = APIKlient.PostRequest("api/Lawyer/AddElement", new LawyerBindingModel
+                    service.AddElement(new LawyerBindingModel
                     {
                         LawyerFIO = textBoxFIO.Text
                     });
                 }
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
+                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                DialogResult = DialogResult.OK;
+                Close();
             }
             catch (Exception ex)
             {

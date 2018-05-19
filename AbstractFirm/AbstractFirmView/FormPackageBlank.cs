@@ -1,36 +1,41 @@
-﻿using AbstractFirmService.ViewModel;
+﻿using AbstractFirmService.Interfaces;
+using AbstractFirmService.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace AbstractFirmView
 {
     public partial class FormPackageBlank : Form
     {
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
         public PackageBlankViewModel Model { set { model = value; } get { return model; } }
+
+        private readonly IBlankService service;
 
         private PackageBlankViewModel model;
 
-        public FormPackageBlank()
+        public FormPackageBlank(IBlankService service)
         {
             InitializeComponent();
+            this.service = service;
         }
 
-        private void FormPackageBlank_Load(object sender, EventArgs e)
+        private void FormProductComponent_Load(object sender, EventArgs e)
         {
             try
             {
-                var response = APIKlient.GetRequest("api/Blank/GetList");
-                if (response.Result.IsSuccessStatusCode)
+                List<BlankViewModel> list = service.GetList();
+                if (list != null)
                 {
                     comboBoxComponent.DisplayMember = "BlankName";
                     comboBoxComponent.ValueMember = "Id";
-                    comboBoxComponent.DataSource = APIKlient.GetElement<List<BlankViewModel>>(response);
+                    comboBoxComponent.DataSource = list;
                     comboBoxComponent.SelectedItem = null;
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -54,7 +59,7 @@ namespace AbstractFirmView
             }
             if (comboBoxComponent.SelectedValue == null)
             {
-                MessageBox.Show("Выберите компонент", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Выберите бланк", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             try

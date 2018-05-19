@@ -1,17 +1,24 @@
 ﻿using AbstractFirmService.BindingModel;
-using AbstractFirmService.ViewModel;
+using AbstractFirmService.Interfaces;
 using Microsoft.Reporting.WinForms;
 using System;
-using System.Collections.Generic;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace AbstractFirmView
 {
     public partial class FormKlientRequests : Form
     {
-        public FormKlientRequests()
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
+        private readonly IReportService service;
+
+        public FormKlientRequests(IReportService service)
         {
             InitializeComponent();
+            this.service = service;
         }
 
         private void buttonMake_Click(object sender, EventArgs e)
@@ -28,21 +35,13 @@ namespace AbstractFirmView
                                             " по " + dateTimePickerTo.Value.ToShortDateString());
                 reportViewer.LocalReport.SetParameters(parameter);
 
-                var response = APIKlient.PostRequest("api/Report/GetKlientRequests", new ReportBindingModel
+                var dataSource = service.GetKlientRequests(new ReportBindingModel
                 {
                     DateFrom = dateTimePickerFrom.Value,
                     DateTo = dateTimePickerTo.Value
                 });
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    var dataSource = APIKlient.GetElement<List<KlientRequestsModel>>(response);
-                    ReportDataSource source = new ReportDataSource("DataSetRequests", dataSource);
-                    reportViewer.LocalReport.DataSources.Add(source);
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
+                ReportDataSource source = new ReportDataSource("DataSetRequests", dataSource);
+                reportViewer.LocalReport.DataSources.Add(source);
 
                 reportViewer.RefreshReport();
             }
@@ -67,20 +66,13 @@ namespace AbstractFirmView
             {
                 try
                 {
-                    var response = APIKlient.PostRequest("api/Report/SaveKlientRequests", new ReportBindingModel
+                    service.SaveKlientRequests(new ReportBindingModel
                     {
                         FileName = sfd.FileName,
                         DateFrom = dateTimePickerFrom.Value,
                         DateTo = dateTimePickerTo.Value
                     });
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
-                    }
+                    MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
@@ -88,6 +80,5 @@ namespace AbstractFirmView
                 }
             }
         }
-
 	}
 }

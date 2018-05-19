@@ -1,38 +1,40 @@
 ﻿using AbstractFirmService.BindingModel;
+using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
 using System;
-using System.Net.Http;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace AbstractFirmView
 {
     public partial class FormKlient : Form
     {
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
         public int Id { set { id = value; } }
+
+        private readonly IKlientService service;
 
         private int? id;
 
-        public FormKlient()
+        public FormKlient(IKlientService service)
         {
             InitializeComponent();
+            this.service = service;
         }
 
-        private void FormKlient_Load(object sender, EventArgs e)
+        private void FormClient_Load(object sender, EventArgs e)
         {
             if (id.HasValue)
             {
                 try
                 {
-                    var response = APIKlient.GetRequest("api/Klient/Get/" + id.Value);
-                    if (response.Result.IsSuccessStatusCode)
+                    KlientViewModel view = service.GetElement(id.Value);
+                    if (view != null)
                     {
-                        var klient = APIKlient.GetElement<KlientViewModel>(response);
-                        textBoxFIO.Text = klient.KlientFIO;
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
+                        textBoxFIO.Text = view.KlientFIO;
                     }
                 }
                 catch (Exception ex)
@@ -51,10 +53,9 @@ namespace AbstractFirmView
             }
             try
             {
-                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    response = APIKlient.PostRequest("api/Klient/UpdElement", new KlientBindingModel
+                    service.UpdElement(new KlientBindingModel
                     {
                         Id = id.Value,
                         KlientFIO = textBoxFIO.Text
@@ -62,21 +63,14 @@ namespace AbstractFirmView
                 }
                 else
                 {
-                    response = APIKlient.PostRequest("api/Klient/AddElement", new KlientBindingModel
+                    service.AddElement(new KlientBindingModel
                     {
                         KlientFIO = textBoxFIO.Text
                     });
                 }
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
+                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                DialogResult = DialogResult.OK;
+                Close();
             }
             catch (Exception ex)
             {

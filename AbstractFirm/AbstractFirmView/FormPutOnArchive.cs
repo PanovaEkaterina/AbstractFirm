@@ -1,53 +1,52 @@
 ﻿using AbstractFirmService.BindingModel;
+using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace AbstractFirmView
 {
     public partial class FormPutOnArchive : Form
     {
-        public FormPutOnArchive()
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
+        private readonly IArchiveService serviceS;
+
+        private readonly IBlankService serviceC;
+
+        private readonly IMainService serviceM;
+
+        public FormPutOnArchive(IArchiveService serviceS, IBlankService serviceC, IMainService serviceM)
         {
             InitializeComponent();
+            this.serviceS = serviceS;
+            this.serviceC = serviceC;
+            this.serviceM = serviceM;
         }
 
-        private void FormPutOnArchive_Load(object sender, EventArgs e)
+        private void FormPutOnStock_Load(object sender, EventArgs e)
         {
             try
             {
-                var responseC = APIKlient.GetRequest("api/Blank/GetList");
-                if (responseC.Result.IsSuccessStatusCode)
+                List<BlankViewModel> listC = serviceC.GetList();
+                if (listC != null)
                 {
-                    List<BlankViewModel> list = APIKlient.GetElement<List<BlankViewModel>>(responseC);
-                    if (list != null)
-                    {
-                        comboBoxComponent.DisplayMember = "BlankName";
-                        comboBoxComponent.ValueMember = "Id";
-                        comboBoxComponent.DataSource = list;
-                        comboBoxComponent.SelectedItem = null;
-                    }
+                    comboBoxComponent.DisplayMember = "BlankName";
+                    comboBoxComponent.ValueMember = "Id";
+                    comboBoxComponent.DataSource = listC;
+                    comboBoxComponent.SelectedItem = null;
                 }
-                else
+                List<ArchiveViewModel> listS = serviceS.GetList();
+                if (listS != null)
                 {
-                    throw new Exception(APIKlient.GetError(responseC));
-                }
-                var responseS = APIKlient.GetRequest("api/Archive/GetList");
-                if (responseS.Result.IsSuccessStatusCode)
-                {
-                    List<ArchiveViewModel> list = APIKlient.GetElement<List<ArchiveViewModel>>(responseS);
-                    if (list != null)
-                    {
-                        comboBoxStock.DisplayMember = "ArchiveName";
-                        comboBoxStock.ValueMember = "Id";
-                        comboBoxStock.DataSource = list;
-                        comboBoxStock.SelectedItem = null;
-                    }
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(responseC));
+                    comboBoxStock.DisplayMember = "ArchiveName";
+                    comboBoxStock.ValueMember = "Id";
+                    comboBoxStock.DataSource = listS;
+                    comboBoxStock.SelectedItem = null;
                 }
             }
             catch (Exception ex)
@@ -75,22 +74,15 @@ namespace AbstractFirmView
             }
             try
             {
-                var response = APIKlient.PostRequest("api/Main/PutBlankOnArchive", new ArchiveBlankBindingModel
+                serviceM.PutBlankOnArchive(new ArchiveBlankBindingModel
                 {
                     BlankId = Convert.ToInt32(comboBoxComponent.SelectedValue),
                     ArchiveId = Convert.ToInt32(comboBoxStock.SelectedValue),
                     Count = Convert.ToInt32(textBoxCount.Text)
                 });
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
+                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                DialogResult = DialogResult.OK;
+                Close();
             }
             catch (Exception ex)
             {

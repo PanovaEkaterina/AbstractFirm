@@ -1,40 +1,43 @@
 ﻿using AbstractFirmService.BindingModel;
-using AbstractFirmService.ViewModel;
+using AbstractFirmService.Interfaces;
 using System;
-using System.Collections.Generic;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace AbstractFirmView
 {
     public partial class FormArchivesLoad : Form
     {
-        public FormArchivesLoad()
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
+        private readonly IReportService service;
+
+        public FormArchivesLoad(IReportService service)
         {
             InitializeComponent();
+            this.service = service;
         }
 
         private void FormArchivesLoad_Load(object sender, EventArgs e)
         {
             try
             {
-                var response = APIKlient.GetRequest("api/Report/GetArchivesLoad");
-                if (response.Result.IsSuccessStatusCode)
+                var dict = service.GetArchivesLoad();
+                if (dict != null)
                 {
                     dataGridView.Rows.Clear();
-                    foreach (var elem in APIKlient.GetElement<List<ArchivesLoadViewModel>>(response))
+                    foreach (var elem in dict)
                     {
                         dataGridView.Rows.Add(new object[] { elem.ArchiveName, "", "" });
                         foreach (var listElem in elem.Blanks)
                         {
-                            dataGridView.Rows.Add(new object[] { "", listElem.BlankName, listElem.Count });
+                            dataGridView.Rows.Add(new object[] { "", listElem.Item1, listElem.Item2 });
                         }
                         dataGridView.Rows.Add(new object[] { "Итого", "", elem.TotalCount });
                         dataGridView.Rows.Add(new object[] { });
                     }
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -53,18 +56,11 @@ namespace AbstractFirmView
             {
                 try
                 {
-                    var response = APIKlient.PostRequest("api/Report/SaveArchivesLoad", new ReportBindingModel
+                    service.SaveArchivesLoad(new ReportBindingModel
                     {
                         FileName = sfd.FileName
                     });
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
-                    }
+                    MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {

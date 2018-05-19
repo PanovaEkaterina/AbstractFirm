@@ -1,21 +1,28 @@
 ﻿using AbstractFirmService.BindingModel;
+using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
 using System;
-using System.Net.Http;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace AbstractFirmView
 {
     public partial class FormArchive : Form
     {
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
         public int Id { set { id = value; } }
+
+        private readonly IArchiveService service;
 
         private int? id;
 
-        public FormArchive()
+        public FormArchive(IArchiveService service)
         {
             InitializeComponent();
+            this.service = service;
         }
 
         private void FormArchive_Load(object sender, EventArgs e)
@@ -24,20 +31,15 @@ namespace AbstractFirmView
             {
                 try
                 {
-                    var response = APIKlient.GetRequest("api/Archive/Get/" + id.Value);
-                    if (response.Result.IsSuccessStatusCode)
+                    ArchiveViewModel view = service.GetElement(id.Value);
+                    if (view != null)
                     {
-                        var Archive = APIKlient.GetElement<ArchiveViewModel>(response);
-                        textBoxName.Text = Archive.ArchiveName;
-                        dataGridView.DataSource = Archive.ArchiveBlanks;
+                        textBoxName.Text = view.ArchiveName;
+                        dataGridView.DataSource = view.ArchiveBlanks;
                         dataGridView.Columns[0].Visible = false;
                         dataGridView.Columns[1].Visible = false;
                         dataGridView.Columns[2].Visible = false;
                         dataGridView.Columns[3].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
                     }
                 }
                 catch (Exception ex)
@@ -56,10 +58,9 @@ namespace AbstractFirmView
             }
             try
             {
-                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    response = APIKlient.PostRequest("api/Archive/UpdElement", new ArchiveBindingModel
+                    service.UpdElement(new ArchiveBindingModel
                     {
                         Id = id.Value,
                         ArchiveName = textBoxName.Text
@@ -67,21 +68,14 @@ namespace AbstractFirmView
                 }
                 else
                 {
-                    response = APIKlient.PostRequest("api/Archive/AddElement", new ArchiveBindingModel
+                    service.AddElement(new ArchiveBindingModel
                     {
                         ArchiveName = textBoxName.Text
                     });
                 }
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
+                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                DialogResult = DialogResult.OK;
+                Close();
             }
             catch (Exception ex)
             {

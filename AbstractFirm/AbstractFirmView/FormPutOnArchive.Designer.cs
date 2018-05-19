@@ -126,7 +126,7 @@
             this.Name = "FormPutOnStock";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Пополнение архива";
-            this.Load += new System.EventHandler(this.FormPutOnArchive_Load);
+            this.Load += new System.EventHandler(this.FormPutOnStock_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 

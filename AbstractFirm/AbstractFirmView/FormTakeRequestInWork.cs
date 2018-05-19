@@ -1,23 +1,35 @@
 ﻿using AbstractFirmService.BindingModel;
+using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace AbstractFirmView
 {
     public partial class FormTakeRequestInWork : Form
     {
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
         public int Id { set { id = value; } }
+
+        private readonly ILawyerService serviceI;
+
+        private readonly IMainService serviceM;
 
         private int? id;
 
-        public FormTakeRequestInWork()
+        public FormTakeRequestInWork(ILawyerService serviceI, IMainService serviceM)
         {
             InitializeComponent();
+            this.serviceI = serviceI;
+            this.serviceM = serviceM;
         }
 
-        private void FormTakeRequestInWork_Load(object sender, EventArgs e)
+        private void FormTakeOrderInWork_Load(object sender, EventArgs e)
         {
             try
             {
@@ -26,21 +38,13 @@ namespace AbstractFirmView
                     MessageBox.Show("Не указан заказ", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     Close();
                 }
-                var response = APIKlient.GetRequest("api/Lawyer/GetList");
-                if (response.Result.IsSuccessStatusCode)
+                List<LawyerViewModel> listI = serviceI.GetList();
+                if (listI != null)
                 {
-                    List<LawyerViewModel> list = APIKlient.GetElement<List<LawyerViewModel>>(response);
-                    if (list != null)
-                    {
-                        comboBoxImplementer.DisplayMember = "LawyerFIO";
-                        comboBoxImplementer.ValueMember = "Id";
-                        comboBoxImplementer.DataSource = list;
-                        comboBoxImplementer.SelectedItem = null;
-                    }
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
+                    comboBoxImplementer.DisplayMember = "LawyerFIO";
+                    comboBoxImplementer.ValueMember = "Id";
+                    comboBoxImplementer.DataSource = listI;
+                    comboBoxImplementer.SelectedItem = null;
                 }
             }
             catch (Exception ex)
@@ -53,26 +57,19 @@ namespace AbstractFirmView
         {
             if (comboBoxImplementer.SelectedValue == null)
             {
-                MessageBox.Show("Выберите юриста", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Выберите исполнителя", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             try
             {
-                var response = APIKlient.PostRequest("api/Main/TakeRequestInWork", new RequestBindingModel
+                serviceM.TakeRequestInWork(new RequestBindingModel
                 {
                     Id = id.Value,
                     LawyerId = Convert.ToInt32(comboBoxImplementer.SelectedValue)
                 });
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
+                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                DialogResult = DialogResult.OK;
+                Close();
             }
             catch (Exception ex)
             {

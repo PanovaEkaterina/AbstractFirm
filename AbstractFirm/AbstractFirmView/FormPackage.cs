@@ -1,44 +1,46 @@
 ﻿using AbstractFirmService.BindingModel;
+using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace AbstractFirmView
 {
     public partial class FormPackage : Form
     {
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
         public int Id { set { id = value; } }
+
+        private readonly IPackageService service;
 
         private int? id;
 
-        private List<PackageBlankViewModel> productComponents;
+        private List<PackageBlankViewModel> packageBlanks;
 
-        public FormPackage()
+        public FormPackage(IPackageService service)
         {
             InitializeComponent();
+            this.service = service;
         }
 
-        private void FormPackage_Load(object sender, EventArgs e)
+        private void FormProduct_Load(object sender, EventArgs e)
         {
             if (id.HasValue)
             {
                 try
                 {
-                    var response = APIKlient.GetRequest("api/Package/Get/" + id.Value);
-                    if (response.Result.IsSuccessStatusCode)
+                    PackageViewModel view = service.GetElement(id.Value);
+                    if (view != null)
                     {
-                        var product = APIKlient.GetElement<PackageViewModel>(response);
-                        textBoxName.Text = product.PackageName;
-                        textBoxPrice.Text = product.Price.ToString();
-                        productComponents = product.PackageBlanks;
+                        textBoxName.Text = view.PackageName;
+                        textBoxPrice.Text = view.Price.ToString();
+                        packageBlanks = view.PackageBlanks;
                         LoadData();
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
                     }
                 }
                 catch (Exception ex)
@@ -48,7 +50,7 @@ namespace AbstractFirmView
             }
             else
             {
-                productComponents = new List<PackageBlankViewModel>();
+                packageBlanks = new List<PackageBlankViewModel>();
             }
         }
 
@@ -56,10 +58,10 @@ namespace AbstractFirmView
         {
             try
             {
-                if (productComponents != null)
+                if (packageBlanks != null)
                 {
                     dataGridView.DataSource = null;
-                    dataGridView.DataSource = productComponents;
+                    dataGridView.DataSource = packageBlanks;
                     dataGridView.Columns[0].Visible = false;
                     dataGridView.Columns[1].Visible = false;
                     dataGridView.Columns[2].Visible = false;
@@ -74,7 +76,7 @@ namespace AbstractFirmView
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            var form = new FormPackageBlank();
+            var form = Container.Resolve<FormPackageBlank>();
             if (form.ShowDialog() == DialogResult.OK)
             {
                 if (form.Model != null)
@@ -83,7 +85,7 @@ namespace AbstractFirmView
                     {
                         form.Model.PackageId = id.Value;
                     }
-                    productComponents.Add(form.Model);
+                    packageBlanks.Add(form.Model);
                 }
                 LoadData();
             }
@@ -93,11 +95,11 @@ namespace AbstractFirmView
         {
             if (dataGridView.SelectedRows.Count == 1)
             {
-                var form = new FormPackageBlank();
-                form.Model = productComponents[dataGridView.SelectedRows[0].Cells[0].RowIndex];
+                var form = Container.Resolve<FormPackageBlank>();
+                form.Model = packageBlanks[dataGridView.SelectedRows[0].Cells[0].RowIndex];
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    productComponents[dataGridView.SelectedRows[0].Cells[0].RowIndex] = form.Model;
+                    packageBlanks[dataGridView.SelectedRows[0].Cells[0].RowIndex] = form.Model;
                     LoadData();
                 }
             }
@@ -111,7 +113,7 @@ namespace AbstractFirmView
                 {
                     try
                     {
-                        productComponents.RemoveAt(dataGridView.SelectedRows[0].Cells[0].RowIndex);
+                        packageBlanks.RemoveAt(dataGridView.SelectedRows[0].Cells[0].RowIndex);
                     }
                     catch (Exception ex)
                     {
@@ -139,7 +141,7 @@ namespace AbstractFirmView
                 MessageBox.Show("Заполните цену", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            if (productComponents == null || productComponents.Count == 0)
+            if (packageBlanks == null || packageBlanks.Count == 0)
             {
                 MessageBox.Show("Заполните компоненты", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
@@ -147,20 +149,19 @@ namespace AbstractFirmView
             try
             {
                 List<PackageBlankBindingModel> productComponentBM = new List<PackageBlankBindingModel>();
-                for (int i = 0; i < productComponents.Count; ++i)
+                for (int i = 0; i < packageBlanks.Count; ++i)
                 {
                     productComponentBM.Add(new PackageBlankBindingModel
                     {
-                        Id = productComponents[i].Id,
-                        PackageId = productComponents[i].PackageId,
-                        BlankId = productComponents[i].BlankId,
-                        Count = productComponents[i].Count
+                        Id = packageBlanks[i].Id,
+                        PackageId = packageBlanks[i].PackageId,
+                        BlankId = packageBlanks[i].BlankId,
+                        Count = packageBlanks[i].Count
                     });
                 }
-                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    response = APIKlient.PostRequest("api/Package/UpdElement", new PackageBindingModel
+                    service.UpdElement(new PackageBindingModel
                     {
                         Id = id.Value,
                         PackageName = textBoxName.Text,
@@ -170,23 +171,16 @@ namespace AbstractFirmView
                 }
                 else
                 {
-                    response = APIKlient.PostRequest("api/Package/AddElement", new PackageBindingModel
+                    service.AddElement(new PackageBindingModel
                     {
                         PackageName = textBoxName.Text,
                         Price = Convert.ToInt32(textBoxPrice.Text),
                         PackageBlanks = productComponentBM
                     });
                 }
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
+                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                DialogResult = DialogResult.OK;
+                Close();
             }
             catch (Exception ex)
             {

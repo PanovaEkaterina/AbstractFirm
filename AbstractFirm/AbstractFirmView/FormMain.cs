@@ -1,39 +1,43 @@
 ﻿using AbstractFirmService.BindingModel;
+using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace AbstractFirmView
 {
     public partial class FormMain : Form
     {
-        public FormMain()
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
+        private readonly IMainService service;
+
+        private readonly IReportService reportService;
+
+        public FormMain(IMainService service, IReportService reportService)
         {
             InitializeComponent();
+            this.service = service;
+            this.reportService = reportService;
         }
 
         private void LoadData()
         {
             try
             {
-                var response = APIKlient.GetRequest("api/Main/GetList");
-                if (response.Result.IsSuccessStatusCode)
+                List<RequestViewModel> list = service.GetList();
+                if (list != null)
                 {
-                    List<RequestViewModel> list = APIKlient.GetElement<List<RequestViewModel>>(response);
-                    if (list != null)
-                    {
-                        dataGridView.DataSource = list;
-                        dataGridView.Columns[0].Visible = false;
-                        dataGridView.Columns[1].Visible = false;
-                        dataGridView.Columns[3].Visible = false;
-                        dataGridView.Columns[5].Visible = false;
-                        dataGridView.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                    }
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
+                    dataGridView.DataSource = list;
+                    dataGridView.Columns[0].Visible = false;
+                    dataGridView.Columns[1].Visible = false;
+                    dataGridView.Columns[3].Visible = false;
+                    dataGridView.Columns[5].Visible = false;
+                    dataGridView.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 }
             }
             catch (Exception ex)
@@ -44,79 +48,67 @@ namespace AbstractFirmView
 
         private void клиентыToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = new FormKlients();
+            var form = Container.Resolve<FormKlients>();
             form.ShowDialog();
         }
 
         private void компонентыToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = new FormBlanks();
+            var form = Container.Resolve<FormBlanks>();
             form.ShowDialog();
         }
 
         private void изделияToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = new FormPackages();
+            var form = Container.Resolve<FormPackages>();
             form.ShowDialog();
         }
 
         private void складыToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = new FormArchives();
+            var form = Container.Resolve<FormArchives>();
             form.ShowDialog();
         }
 
         private void сотрудникиToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = new FormLawyers();
+            var form = Container.Resolve<FormLawyers>();
             form.ShowDialog();
         }
 
         private void пополнитьСкладToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = new FormPutOnArchive();
+            var form = Container.Resolve<FormPutOnArchive>();
             form.ShowDialog();
         }
 
-        private void buttonCreateRequest_Click(object sender, EventArgs e)
+        private void buttonCreateOrder_Click(object sender, EventArgs e)
         {
-            var form = new FormCreateRequest();
+            var form = Container.Resolve<FormCreateRequest>();
             form.ShowDialog();
             LoadData();
         }
 
-        private void buttonTakeRequestInWork_Click(object sender, EventArgs e)
+        private void buttonTakeOrderInWork_Click(object sender, EventArgs e)
         {
             if (dataGridView.SelectedRows.Count == 1)
             {
-                var form = new FormTakeRequestInWork
-                {
-                    Id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value)
-                };
+                var form = Container.Resolve<FormTakeRequestInWork>();
+                form.Id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value);
                 form.ShowDialog();
                 LoadData();
             }
         }
 
-        private void buttonRequestReady_Click(object sender, EventArgs e)
+        private void buttonOrderReady_Click(object sender, EventArgs e)
         {
             if (dataGridView.SelectedRows.Count == 1)
             {
                 int id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value);
                 try
                 {
-                    var response = APIKlient.PostRequest("api/Main/FinishRequest", new RequestBindingModel
-                    {
-                        Id = id
-                    });
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        LoadData();
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
-                    }
+                    service.FinishRequest(id);
+                    LoadData();
                 }
                 catch (Exception ex)
                 {
@@ -125,25 +117,15 @@ namespace AbstractFirmView
             }
         }
 
-        private void buttonPayRequest_Click(object sender, EventArgs e)
+        private void buttonPayOrder_Click(object sender, EventArgs e)
         {
             if (dataGridView.SelectedRows.Count == 1)
             {
                 int id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value);
                 try
                 {
-                    var response = APIKlient.PostRequest("api/Main/.PayRequest", new RequestBindingModel
-                    {
-                        Id = id
-                    });
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        LoadData();
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
-                    }
+                    service.PayRequest(id);
+                    LoadData();
                 }
                 catch (Exception ex)
                 {
@@ -167,18 +149,11 @@ namespace AbstractFirmView
             {
                 try
                 {
-                    var response = APIKlient.PostRequest("api/Report/SavePackagePrice", new ReportBindingModel
+                    reportService.SavePackagePrice(new ReportBindingModel
                     {
                         FileName = sfd.FileName
                     });
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
-                    }
+                    MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
@@ -189,13 +164,13 @@ namespace AbstractFirmView
 
         private void загруженностьСкладовToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = new FormArchivesLoad();
+            var form = Container.Resolve<FormArchivesLoad>();
             form.ShowDialog();
         }
 
         private void заказыКлиентовToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = new FormKlientRequests();
+            var form = Container.Resolve<FormKlientRequests>();
             form.ShowDialog();
         }
     }

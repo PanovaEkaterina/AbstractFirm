@@ -1,5 +1,11 @@
-﻿using System;
+﻿using AbstractFirmService;
+using AbstractFirmService.ImplementationsBD;
+using AbstractFirmService.Interfaces;
+using System;
+using System.Data.Entity;
 using System.Windows.Forms;
+using Unity;
+using Unity.Lifetime;
 
 namespace AbstractFirmView
 {
@@ -11,10 +17,25 @@ namespace AbstractFirmView
         [STAThread]
         static void Main()
         {
-            APIKlient.Connect();
+            var container = BuildUnityContainer();
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new FormMain());
-        }              
+            Application.Run(container.Resolve<FormMain>());
+        }
+
+        public static IUnityContainer BuildUnityContainer()
+        {
+            var currentContainer = new UnityContainer();
+            currentContainer.RegisterType<DbContext, AbstractDbContext>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<IKlientService, KlientServiceBD>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<IBlankService, BlankServiceBD>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<ILawyerService, LawyerServiceBD>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<IPackageService, PackageServiceBD>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<IArchiveService, ArchiveServiceBD>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<IMainService, MainServiceBD>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<IReportService, ReportServiceBD>(new HierarchicalLifetimeManager());
+            return currentContainer;
+        }
     }
 }

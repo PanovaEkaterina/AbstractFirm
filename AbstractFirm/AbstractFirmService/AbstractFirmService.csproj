@@ -63,6 +63,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AbstractDbContext.cs" />
+    <Compile Include="Attributies\CustomInterfaceAttribute.cs" />
+    <Compile Include="Attributies\CustomMethodAttribute.cs" />
     <Compile Include="BindingModel\ArchiveBindingModel.cs" />
     <Compile Include="BindingModel\ArchiveBlankBindingModel.cs" />
     <Compile Include="BindingModel\BlankBindingModel.cs" />

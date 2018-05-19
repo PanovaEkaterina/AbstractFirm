@@ -1,4 +1,5 @@
-﻿using AbstractFirmService.BindingModel;
+﻿using AbstractFirmRestApi.Services;
+using AbstractFirmService.BindingModel;
 using AbstractFirmService.Interfaces;
 using System;
 using System.Web.Http;
@@ -53,6 +54,18 @@ namespace AbstractFirmRestApi.Controllers
         public void PutBlankOnArchive(ArchiveBlankBindingModel model)
         {
             _service.PutBlankOnArchive(model);
+        }
+
+        [HttpGet]
+        public IHttpActionResult GetInfo()
+        {
+            ReflectionService service = new ReflectionService();
+            var list = service.GetInfoByAssembly();
+            if (list == null)
+            {
+                InternalServerError(new Exception("Нет данных"));
+            }
+            return Ok(list);
         }
     }
 }

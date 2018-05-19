@@ -30,30 +30,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
-      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
-    </Reference>
-    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
-      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
-    </Reference>
-    <Reference Include="itextsharp, Version=5.5.13.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
-      <HintPath>..\packages\iTextSharp.5.5.13\lib\itextsharp.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-      <HintPath>..\packages\Microsoft.Office.Interop.Excel.15.0.4795.1000\lib\net20\Microsoft.Office.Interop.Excel.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Office.Interop.Word, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-      <HintPath>..\packages\Microsoft.Office.Interop.Word.15.0.4797.1003\lib\net20\Microsoft.Office.Interop.Word.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
-    <Reference Include="System.ComponentModel.DataAnnotations" />
-    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -62,28 +40,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AbstractDbContext.cs" />
-    <Compile Include="Attributies\CustomInterfaceAttribute.cs" />
-    <Compile Include="Attributies\CustomMethodAttribute.cs" />
     <Compile Include="BindingModel\ArchiveBindingModel.cs" />
     <Compile Include="BindingModel\ArchiveBlankBindingModel.cs" />
     <Compile Include="BindingModel\BlankBindingModel.cs" />
     <Compile Include="BindingModel\KlientBindingModel.cs" />
     <Compile Include="BindingModel\LawyerBindingModel.cs" />
-    <Compile Include="BindingModel\MessageInfoBindingModel.cs" />
     <Compile Include="BindingModel\PackageBindingModel.cs" />
     <Compile Include="BindingModel\PackageBlankBindingModel.cs" />
-    <Compile Include="BindingModel\ReportBindingModel.cs" />
     <Compile Include="BindingModel\RequestBindingModel.cs" />
     <Compile Include="DataList.cs" />
-    <Compile Include="ImplementationsBD\ArchiveServiceBD.cs" />
-    <Compile Include="ImplementationsBD\BlankServiceBD.cs" />
-    <Compile Include="ImplementationsBD\KlientServiceBD .cs" />
-    <Compile Include="ImplementationsBD\LawyerServiceBD.cs" />
-    <Compile Include="ImplementationsBD\MainServiceBD .cs" />
-    <Compile Include="ImplementationsBD\MessageInfoServiceBD.cs" />
-    <Compile Include="ImplementationsBD\PackageServiceBD.cs" />
-    <Compile Include="ImplementationsBD\ReportServiceBD.cs" />
     <Compile Include="ImplementationsList\ArchiveServiceList.cs" />
     <Compile Include="ImplementationsList\BlankServiceList .cs" />
     <Compile Include="ImplementationsList\KlientServiceList.cs" />
@@ -95,36 +60,13 @@
     <Compile Include="Interfaces\IKlientService.cs" />
     <Compile Include="Interfaces\ILawyerService.cs" />
     <Compile Include="Interfaces\IMainService.cs" />
-    <Compile Include="Interfaces\IMessageInfoService.cs" />
     <Compile Include="Interfaces\IPackageService.cs" />
-    <Compile Include="Interfaces\IReportService.cs" />
-    <Compile Include="Migrations\201804242025145_FirstMigration.cs" />
-    <Compile Include="Migrations\201804242025145_FirstMigration.Designer.cs">
-      <DependentUpon>201804242025145_FirstMigration.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201805041814560_AddFieldInKlient.cs" />
-    <Compile Include="Migrations\201805041814560_AddFieldInKlient.Designer.cs">
-      <DependentUpon>201805041814560_AddFieldInKlient.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201805041844202_AddTableMessageInfo.cs" />
-    <Compile Include="Migrations\201805041844202_AddTableMessageInfo.Designer.cs">
-      <DependentUpon>201805041844202_AddTableMessageInfo.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
     <Compile Include="ViewModel\ArchiveBlankViewModel.cs" />
-    <Compile Include="ViewModel\ArchivesLoadViewModel.cs" />
     <Compile Include="ViewModel\ArchiveViewModel.cs" />
     <Compile Include="ViewModel\BlankViewModel.cs" />
-    <Compile Include="ViewModel\KlientRequestsModel.cs" />
     <Compile Include="ViewModel\KlientViewModel.cs" />
     <Compile Include="ViewModel\LawyerViewModel.cs" />
-    <Compile Include="ViewModel\MessageInfoViewModel.cs" />
     <Compile Include="ViewModel\PackageBlankViewModel.cs" />
     <Compile Include="ViewModel\PackageViewModel.cs" />
     <Compile Include="ViewModel\RequestViewModel.cs" />
@@ -134,26 +76,6 @@
       <Project>{23C74D2B-074E-41EE-B513-5060A1F0665F}</Project>
       <Name>AbstractFirmModel</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-    <None Include="packages.config" />
-    <None Include="Resources\TIMCYR.ttf" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Migrations\201804242025145_FirstMigration.resx">
-      <DependentUpon>201804242025145_FirstMigration.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201805041814560_AddFieldInKlient.resx">
-      <DependentUpon>201805041814560_AddFieldInKlient.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201805041844202_AddTableMessageInfo.resx">
-      <DependentUpon>201805041844202_AddTableMessageInfo.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

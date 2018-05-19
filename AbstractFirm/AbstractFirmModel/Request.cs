@@ -21,11 +21,5 @@ namespace AbstractFirmModel
         public DateTime DateCreate { get; set; }
 
         public DateTime? DateImplement { get; set; }
-
-        public virtual Klient Klient { get; set; }
-
-        public virtual Package Package { get; set; }
-
-        public virtual Lawyer Lawyer { get; set; }
     }
 }

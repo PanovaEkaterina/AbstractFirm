@@ -1,52 +1,53 @@
 ﻿using AbstractFirmService.BindingModel;
-using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractFirmView
 {
     public partial class FormCreateRequest : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IKlientService serviceC;
-
-        private readonly IPackageService serviceP;
-
-        private readonly IMainService serviceM;
-
-        public FormCreateRequest(IKlientService serviceC, IPackageService serviceP, IMainService serviceM)
+        public FormCreateRequest()
         {
             InitializeComponent();
-            this.serviceC = serviceC;
-            this.serviceP = serviceP;
-            this.serviceM = serviceM;
         }
 
-        private void FormCreateOrder_Load(object sender, EventArgs e)
+        private void FormCreateRequest_Load(object sender, EventArgs e)
         {
             try
             {
-                List<KlientViewModel> listC = serviceC.GetList();
-                if (listC != null)
+                var responseC = APIKlient.GetRequest("api/Klient/GetList");
+                if (responseC.Result.IsSuccessStatusCode)
                 {
-                    comboBoxClient.DisplayMember = "KlientFIO";
-                    comboBoxClient.ValueMember = "Id";
-                    comboBoxClient.DataSource = listC;
-                    comboBoxClient.SelectedItem = null;
+                    List<KlientViewModel> list = APIKlient.GetElement<List<KlientViewModel>>(responseC);
+                    if (list != null)
+                    {
+                        comboBoxClient.DisplayMember = "KlientFIO";
+                        comboBoxClient.ValueMember = "Id";
+                        comboBoxClient.DataSource = list;
+                        comboBoxClient.SelectedItem = null;
+                    }
                 }
-                List<PackageViewModel> listP = serviceP.GetList();
-                if (listP != null)
+                else
                 {
-                    comboBoxProduct.DisplayMember = "PackageName";
-                    comboBoxProduct.ValueMember = "Id";
-                    comboBoxProduct.DataSource = listP;
-                    comboBoxProduct.SelectedItem = null;
+                    throw new Exception(APIKlient.GetError(responseC));
+                }
+                var responseP = APIKlient.GetRequest("api/Package/GetList");
+                if (responseP.Result.IsSuccessStatusCode)
+                {
+                    List<PackageViewModel> list = APIKlient.GetElement<List<PackageViewModel>>(responseP);
+                    if (list != null)
+                    {
+                        comboBoxProduct.DisplayMember = "PackageName";
+                        comboBoxProduct.ValueMember = "Id";
+                        comboBoxProduct.DataSource = list;
+                        comboBoxProduct.SelectedItem = null;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIKlient.GetError(responseP));
                 }
             }
             catch (Exception ex)
@@ -62,9 +63,17 @@ namespace AbstractFirmView
                 try
                 {
                     int id = Convert.ToInt32(comboBoxProduct.SelectedValue);
-                    PackageViewModel product = serviceP.GetElement(id);
-                    int count = Convert.ToInt32(textBoxCount.Text);
-                    textBoxSum.Text = (count * product.Price).ToString();
+                    var responseP = APIKlient.GetRequest("api/Product/Get/" + id);
+                    if (responseP.Result.IsSuccessStatusCode)
+                    {
+                        PackageViewModel product = APIKlient.GetElement<PackageViewModel>(responseP);
+                        int count = Convert.ToInt32(textBoxCount.Text);
+                        textBoxSum.Text = (count * (int)product.Price).ToString();
+                    }
+                    else
+                    {
+                        throw new Exception(APIKlient.GetError(responseP));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -97,21 +106,28 @@ namespace AbstractFirmView
             }
             if (comboBoxProduct.SelectedValue == null)
             {
-                MessageBox.Show("Выберите изделие", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Выберите пакет документов", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             try
             {
-                serviceM.CreateRequest(new RequestBindingModel
+                var response = APIKlient.PostRequest("api/Main/CreateRequest", new RequestBindingModel
                 {
                     KlientId = Convert.ToInt32(comboBoxClient.SelectedValue),
                     PackageId = Convert.ToInt32(comboBoxProduct.SelectedValue),
                     Count = Convert.ToInt32(textBoxCount.Text),
                     Sum = Convert.ToInt32(textBoxSum.Text)
                 });
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                DialogResult = DialogResult.OK;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    DialogResult = DialogResult.OK;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APIKlient.GetError(response));
+                }
             }
             catch (Exception ex)
             {

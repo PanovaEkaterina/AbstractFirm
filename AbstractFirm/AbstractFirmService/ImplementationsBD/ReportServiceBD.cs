@@ -7,11 +7,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Data.Entity;
-using Microsoft.Office.Interop.Excel;
 using System.Data.Entity.SqlServer;
-using System.util;
+using Microsoft.Office.Interop.Excel;
 using iTextSharp.text.pdf;
 using iTextSharp.text;
+using static AbstractFirmService.ViewModel.ArchivesLoadViewModel;
 
 namespace AbstractFirmService.ImplementationsBD
 {
@@ -131,7 +131,7 @@ namespace AbstractFirmService.ImplementationsBD
             {
                 ArchiveName = stock.ArchiveName,
                 TotalCount = stockCompList.Sum(r => r.Count),
-                Blanks = stockCompList.Select(r => new Tuple<string, int>(r.Blank.BlankName, r.Count))
+                Blanks = stockCompList.Select(r => new ArchivesBlankLoadViewModel { BlankName = r.Blank.BlankName, Count = r.Count }).ToList()
             })
                             .ToList();
         }
@@ -173,7 +173,7 @@ namespace AbstractFirmService.ImplementationsBD
                 excelcells.Merge(Type.Missing);
                 //задаем текст, настройки шрифта и ячейки
                 excelcells.Font.Bold = true;
-                excelcells.Value2 = "Загруженность складов";
+                excelcells.Value2 = "Загруженность архивов";
                 excelcells.RowHeight = 25;
                 excelcells.HorizontalAlignment = Microsoft.Office.Interop.Excel.XlHAlign.xlHAlignCenter;
                 excelcells.VerticalAlignment = Microsoft.Office.Interop.Excel.XlVAlign.xlVAlignCenter;
@@ -218,9 +218,9 @@ namespace AbstractFirmService.ImplementationsBD
 
                             foreach (var listElem in elem.Blanks)
                             {
-                                excelcells.Value2 = listElem.Item1;
+                                excelcells.Value2 = listElem.BlankName;
                                 excelcells.ColumnWidth = 10;
-                                excelcells.get_Offset(0, 1).Value2 = listElem.Item2;
+                                excelcells.get_Offset(0, 1).Value2 = listElem.Count;
                                 excelcells = excelcells.get_Offset(1, 0);
                             }
                         }

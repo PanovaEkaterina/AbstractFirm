@@ -1,15 +1,23 @@
-﻿namespace AbstractFirmService.ViewModel
+﻿using System.Runtime.Serialization;
+
+namespace AbstractFirmService.ViewModel
 {
+    [DataContract]
     public class PackageBlankViewModel
     {
+        [DataMember]
         public int Id { get; set; }
 
+        [DataMember]
         public int PackageId { get; set; }
 
+        [DataMember]
         public int BlankId { get; set; }
 
+        [DataMember]
         public string BlankName { get; set; }
 
+        [DataMember]
         public int Count { get; set; }
     }
 }

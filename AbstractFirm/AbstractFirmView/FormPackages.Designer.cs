@@ -102,7 +102,7 @@
             this.Name = "FormProducts";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Пакеты документов";
-            this.Load += new System.EventHandler(this.FormProducts_Load);
+            this.Load += new System.EventHandler(this.FormPackages_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView)).EndInit();
             this.ResumeLayout(false);
 

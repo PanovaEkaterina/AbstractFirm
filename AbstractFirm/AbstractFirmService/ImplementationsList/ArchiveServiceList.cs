@@ -4,7 +4,6 @@ using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace AbstractFirmService.ImplementationsList
 {
@@ -19,62 +18,100 @@ namespace AbstractFirmService.ImplementationsList
 
         public List<ArchiveViewModel> GetList()
         {
-            List<ArchiveViewModel> result = source.Archives
-                .Select(rec => new ArchiveViewModel
+            List<ArchiveViewModel> result = new List<ArchiveViewModel>();
+            for (int i = 0; i < source.Archives.Count; ++i)
+            {
+                // требуется дополнительно получить список компонентов на складе и их количество
+                List<ArchiveBlankViewModel> ArchiveBlanks = new List<ArchiveBlankViewModel>();
+                for (int j = 0; j < source.ArchiveBlanks.Count; ++j)
                 {
-                    Id = rec.Id,
-                    ArchiveName = rec.ArchiveName,
-                    ArchiveBlanks = source.ArchiveBlanks
-                            .Where(recPC => recPC.ArchiveId == rec.Id)
-                            .Select(recPC => new ArchiveBlankViewModel
+                    if (source.ArchiveBlanks[j].ArchiveId == source.Archives[i].Id)
+                    {
+                        string BlankName = string.Empty;
+                        for (int k = 0; k < source.Blanks.Count; ++k)
+                        {
+                            if (source.PackageBlanks[j].BlankId == source.Blanks[k].Id)
                             {
-                                Id = recPC.Id,
-                                ArchiveId = recPC.ArchiveId,
-                                BlankId = recPC.BlankId,
-                                BlankName = source.Blanks
-                                    .FirstOrDefault(recC => recC.Id == recPC.BlankId)?.BlankName,
-                                Count = recPC.Count
-                            })
-                            .ToList()
-                })
-                .ToList();
+                                BlankName = source.Blanks[k].BlankName;
+                                break;
+                            }
+                        }
+                        ArchiveBlanks.Add(new ArchiveBlankViewModel
+                        {
+                            Id = source.ArchiveBlanks[j].Id,
+                            ArchiveId = source.ArchiveBlanks[j].ArchiveId,
+                            BlankId = source.ArchiveBlanks[j].BlankId,
+                            BlankName = BlankName,
+                            Count = source.ArchiveBlanks[j].Count
+                        });
+                    }
+                }
+                result.Add(new ArchiveViewModel
+                {
+                    Id = source.Archives[i].Id,
+                    ArchiveName = source.Archives[i].ArchiveName,
+                    ArchiveBlanks = ArchiveBlanks
+                });
+            }
             return result;
         }
 
         public ArchiveViewModel GetElement(int id)
         {
-            Archive element = source.Archives.FirstOrDefault(rec => rec.Id == id);
-            if (element != null)
+            for (int i = 0; i < source.Archives.Count; ++i)
             {
-                return new ArchiveViewModel
+                // требуется дополнительно получить список компонентов на складе и их количество
+                List<ArchiveBlankViewModel> ArchiveBlanks = new List<ArchiveBlankViewModel>();
+                for (int j = 0; j < source.ArchiveBlanks.Count; ++j)
                 {
-                    Id = element.Id,
-                    ArchiveName = element.ArchiveName,
-                    ArchiveBlanks = source.ArchiveBlanks
-                            .Where(recPC => recPC.ArchiveId == element.Id)
-                            .Select(recPC => new ArchiveBlankViewModel
+                    if (source.ArchiveBlanks[j].ArchiveId == source.Archives[i].Id)
+                    {
+                        string BlankName = string.Empty;
+                        for (int k = 0; k < source.Blanks.Count; ++k)
+                        {
+                            if (source.PackageBlanks[j].BlankId == source.Blanks[k].Id)
                             {
-                                Id = recPC.Id,
-                                ArchiveId = recPC.ArchiveId,
-                                BlankId = recPC.BlankId,
-                                BlankName = source.Blanks
-                                    .FirstOrDefault(recC => recC.Id == recPC.BlankId)?.BlankName,
-                                Count = recPC.Count
-                            })
-                            .ToList()
-                };
+                                BlankName = source.Blanks[k].BlankName;
+                                break;
+                            }
+                        }
+                        ArchiveBlanks.Add(new ArchiveBlankViewModel
+                        {
+                            Id = source.ArchiveBlanks[j].Id,
+                            ArchiveId = source.ArchiveBlanks[j].ArchiveId,
+                            BlankId = source.ArchiveBlanks[j].BlankId,
+                            BlankName = BlankName,
+                            Count = source.ArchiveBlanks[j].Count
+                        });
+                    }
+                }
+                if (source.Archives[i].Id == id)
+                {
+                    return new ArchiveViewModel
+                    {
+                        Id = source.Archives[i].Id,
+                        ArchiveName = source.Archives[i].ArchiveName,
+                        ArchiveBlanks = ArchiveBlanks
+                    };
+                }
             }
             throw new Exception("Элемент не найден");
         }
 
         public void AddElement(ArchiveBindingModel model)
         {
-            Archive element = source.Archives.FirstOrDefault(rec => rec.ArchiveName == model.ArchiveName);
-            if (element != null)
+            int maxId = 0;
+            for (int i = 0; i < source.Archives.Count; ++i)
             {
-                throw new Exception("Уже есть склад с таким названием");
+                if (source.Archives[i].Id > maxId)
+                {
+                    maxId = source.Archives[i].Id;
+                }
+                if (source.Archives[i].ArchiveName == model.ArchiveName)
+                {
+                    throw new Exception("Уже есть склад с таким названием");
+                }
             }
-            int maxId = source.Archives.Count > 0 ? source.Archives.Max(rec => rec.Id) : 0;
             source.Archives.Add(new Archive
             {
                 Id = maxId + 1,
@@ -84,33 +121,45 @@ namespace AbstractFirmService.ImplementationsList
 
         public void UpdElement(ArchiveBindingModel model)
         {
-            Archive element = source.Archives.FirstOrDefault(rec =>
-                                        rec.ArchiveName == model.ArchiveName && rec.Id != model.Id);
-            if (element != null)
+            int index = -1;
+            for (int i = 0; i < source.Archives.Count; ++i)
             {
-                throw new Exception("Уже есть склад с таким названием");
+                if (source.Archives[i].Id == model.Id)
+                {
+                    index = i;
+                }
+                if (source.Archives[i].ArchiveName == model.ArchiveName &&
+                    source.Archives[i].Id != model.Id)
+                {
+                    throw new Exception("Уже есть склад с таким названием");
+                }
             }
-            element = source.Archives.FirstOrDefault(rec => rec.Id == model.Id);
-            if (element == null)
+            if (index == -1)
             {
                 throw new Exception("Элемент не найден");
             }
-            element.ArchiveName = model.ArchiveName;
+            source.Archives[index].ArchiveName = model.ArchiveName;
         }
 
         public void DelElement(int id)
         {
-            Archive element = source.Archives.FirstOrDefault(rec => rec.Id == id);
-            if (element != null)
+            // при удалении удаляем все записи о компонентах на удаляемом складе
+            for (int i = 0; i < source.ArchiveBlanks.Count; ++i)
             {
-                // при удалении удаляем все записи о компонентах на удаляемом складе
-                source.ArchiveBlanks.RemoveAll(rec => rec.ArchiveId == id);
-                source.Archives.Remove(element);
+                if (source.ArchiveBlanks[i].ArchiveId == id)
+                {
+                    source.ArchiveBlanks.RemoveAt(i--);
+                }
             }
-            else
+            for (int i = 0; i < source.Archives.Count; ++i)
             {
-                throw new Exception("Элемент не найден");
+                if (source.Archives[i].Id == id)
+                {
+                    source.Archives.RemoveAt(i);
+                    return;
+                }
             }
+            throw new Exception("Элемент не найден");
         }
     }
 }

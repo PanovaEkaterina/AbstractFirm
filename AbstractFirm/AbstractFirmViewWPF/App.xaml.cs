@@ -1,6 +1,8 @@
-﻿using AbstractFirmService.ImplementationsList;
+﻿using AbstractFirmService;
+using AbstractFirmService.ImplementationsBD;
 using AbstractFirmService.Interfaces;
 using System;
+using System.Data.Entity;
 using System.Windows;
 using Unity;
 using Unity.Lifetime;
@@ -25,12 +27,13 @@ namespace AbstractFirmViewWPF
         public static IUnityContainer BuildUnityContainer()
         {
             var currentContainer = new UnityContainer();
-            currentContainer.RegisterType<IKlientService, KlientServiceList>(new HierarchicalLifetimeManager());
-            currentContainer.RegisterType<IBlankService, BlankServiceList>(new HierarchicalLifetimeManager());
-            currentContainer.RegisterType<ILawyerService, LawyerServiceList>(new HierarchicalLifetimeManager());
-            currentContainer.RegisterType<IPackageService, PackageServiceList>(new HierarchicalLifetimeManager());
-            currentContainer.RegisterType<IArchiveService, ArchiveServiceList>(new HierarchicalLifetimeManager());
-            currentContainer.RegisterType<IMainService, MainServiceList>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<DbContext, AbstractDbContext>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<IKlientService, KlientServiceBD>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<IBlankService, BlankServiceBD>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<ILawyerService, LawyerServiceBD>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<IPackageService, PackageServiceBD>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<IArchiveService, ArchiveServiceBD>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<IMainService, MainServiceBD>(new HierarchicalLifetimeManager());
 
             return currentContainer;
         }

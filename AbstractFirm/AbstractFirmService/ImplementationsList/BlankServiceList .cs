@@ -4,7 +4,6 @@ using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace AbstractFirmService.ImplementationsList
 {
@@ -19,38 +18,48 @@ namespace AbstractFirmService.ImplementationsList
 
         public List<BlankViewModel> GetList()
         {
-            List<BlankViewModel> result = source.Blanks
-                .Select(rec => new BlankViewModel
+            List<BlankViewModel> result = new List<BlankViewModel>();
+            for (int i = 0; i < source.Blanks.Count; ++i)
+            {
+                result.Add(new BlankViewModel
                 {
-                    Id = rec.Id,
-                    BlankName = rec.BlankName
-                })
-                .ToList();
+                    Id = source.Blanks[i].Id,
+                    BlankName = source.Blanks[i].BlankName
+                });
+            }
             return result;
         }
 
         public BlankViewModel GetElement(int id)
         {
-            Blank element = source.Blanks.FirstOrDefault(rec => rec.Id == id);
-            if (element != null)
+            for (int i = 0; i < source.Blanks.Count; ++i)
             {
-                return new BlankViewModel
+                if (source.Blanks[i].Id == id)
                 {
-                    Id = element.Id,
-                    BlankName = element.BlankName
-                };
+                    return new BlankViewModel
+                    {
+                        Id = source.Blanks[i].Id,
+                        BlankName = source.Blanks[i].BlankName
+                    };
+                }
             }
             throw new Exception("Элемент не найден");
         }
 
         public void AddElement(BlankBindingModel model)
         {
-            Blank element = source.Blanks.FirstOrDefault(rec => rec.BlankName == model.BlankName);
-            if (element != null)
+            int maxId = 0;
+            for (int i = 0; i < source.Blanks.Count; ++i)
             {
-                throw new Exception("Уже есть компонент с таким названием");
+                if (source.Blanks[i].Id > maxId)
+                {
+                    maxId = source.Blanks[i].Id;
+                }
+                if (source.Blanks[i].BlankName == model.BlankName)
+                {
+                    throw new Exception("Уже есть компонент с таким названием");
+                }
             }
-            int maxId = source.Blanks.Count > 0 ? source.Blanks.Max(rec => rec.Id) : 0;
             source.Blanks.Add(new Blank
             {
                 Id = maxId + 1,
@@ -60,31 +69,37 @@ namespace AbstractFirmService.ImplementationsList
 
         public void UpdElement(BlankBindingModel model)
         {
-            Blank element = source.Blanks.FirstOrDefault(rec =>
-                                        rec.BlankName == model.BlankName && rec.Id != model.Id);
-            if (element != null)
+            int index = -1;
+            for (int i = 0; i < source.Blanks.Count; ++i)
             {
-                throw new Exception("Уже есть компонент с таким названием");
+                if (source.Blanks[i].Id == model.Id)
+                {
+                    index = i;
+                }
+                if (source.Blanks[i].BlankName == model.BlankName &&
+                    source.Blanks[i].Id != model.Id)
+                {
+                    throw new Exception("Уже есть компонент с таким названием");
+                }
             }
-            element = source.Blanks.FirstOrDefault(rec => rec.Id == model.Id);
-            if (element == null)
+            if (index == -1)
             {
                 throw new Exception("Элемент не найден");
             }
-            element.BlankName = model.BlankName;
+            source.Blanks[index].BlankName = model.BlankName;
         }
 
         public void DelElement(int id)
         {
-            Blank element = source.Blanks.FirstOrDefault(rec => rec.Id == id);
-            if (element != null)
+            for (int i = 0; i < source.Blanks.Count; ++i)
             {
-                source.Blanks.Remove(element);
+                if (source.Blanks[i].Id == id)
+                {
+                    source.Blanks.RemoveAt(i);
+                    return;
+                }
             }
-            else
-            {
-                throw new Exception("Элемент не найден");
-            }
+            throw new Exception("Элемент не найден");
         }
     }
 }

@@ -4,7 +4,6 @@ using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace AbstractFirmService.ImplementationsList
 {
@@ -19,38 +18,48 @@ namespace AbstractFirmService.ImplementationsList
 
         public List<KlientViewModel> GetList()
         {
-            List<KlientViewModel> result = source.Klients
-                .Select(rec => new KlientViewModel
+            List<KlientViewModel> result = new List<KlientViewModel>();
+            for (int i = 0; i < source.Klients.Count; ++i)
+            {
+                result.Add(new KlientViewModel
                 {
-                    Id = rec.Id,
-                    KlientFIO = rec.KlientFIO
-                })
-                .ToList();
+                    Id = source.Klients[i].Id,
+                    KlientFIO = source.Klients[i].KlientFIO
+                });
+            }
             return result;
         }
 
         public KlientViewModel GetElement(int id)
         {
-            Klient element = source.Klients.FirstOrDefault(rec => rec.Id == id);
-            if (element != null)
+            for (int i = 0; i < source.Klients.Count; ++i)
             {
-                return new KlientViewModel
+                if (source.Klients[i].Id == id)
                 {
-                    Id = element.Id,
-                    KlientFIO = element.KlientFIO
-                };
+                    return new KlientViewModel
+                    {
+                        Id = source.Klients[i].Id,
+                        KlientFIO = source.Klients[i].KlientFIO
+                    };
+                }
             }
             throw new Exception("Элемент не найден");
         }
 
         public void AddElement(KlientBindingModel model)
         {
-            Klient element = source.Klients.FirstOrDefault(rec => rec.KlientFIO == model.KlientFIO);
-            if (element != null)
+            int maxId = 0;
+            for (int i = 0; i < source.Klients.Count; ++i)
             {
-                throw new Exception("Уже есть клиент с таким ФИО");
+                if (source.Klients[i].Id > maxId)
+                {
+                    maxId = source.Klients[i].Id;
+                }
+                if (source.Klients[i].KlientFIO == model.KlientFIO)
+                {
+                    throw new Exception("Уже есть клиент с таким ФИО");
+                }
             }
-            int maxId = source.Klients.Count > 0 ? source.Klients.Max(rec => rec.Id) : 0;
             source.Klients.Add(new Klient
             {
                 Id = maxId + 1,
@@ -60,31 +69,37 @@ namespace AbstractFirmService.ImplementationsList
 
         public void UpdElement(KlientBindingModel model)
         {
-            Klient element = source.Klients.FirstOrDefault(rec =>
-                                    rec.KlientFIO == model.KlientFIO && rec.Id != model.Id);
-            if (element != null)
+            int index = -1;
+            for (int i = 0; i < source.Klients.Count; ++i)
             {
-                throw new Exception("Уже есть клиент с таким ФИО");
+                if (source.Klients[i].Id == model.Id)
+                {
+                    index = i;
+                }
+                if (source.Klients[i].KlientFIO == model.KlientFIO &&
+                    source.Klients[i].Id != model.Id)
+                {
+                    throw new Exception("Уже есть клиент с таким ФИО");
+                }
             }
-            element = source.Klients.FirstOrDefault(rec => rec.Id == model.Id);
-            if (element == null)
+            if (index == -1)
             {
                 throw new Exception("Элемент не найден");
             }
-            element.KlientFIO = model.KlientFIO;
+            source.Klients[index].KlientFIO = model.KlientFIO;
         }
 
         public void DelElement(int id)
         {
-            Klient element = source.Klients.FirstOrDefault(rec => rec.Id == id);
-            if (element != null)
+            for (int i = 0; i < source.Klients.Count; ++i)
             {
-                source.Klients.Remove(element);
+                if (source.Klients[i].Id == id)
+                {
+                    source.Klients.RemoveAt(i);
+                    return;
+                }
             }
-            else
-            {
-                throw new Exception("Элемент не найден");
-            }
+            throw new Exception("Элемент не найден");
         }
     }
 }

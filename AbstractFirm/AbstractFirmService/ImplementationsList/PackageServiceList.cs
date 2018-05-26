@@ -4,7 +4,6 @@ using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace AbstractFirmService.ImplementationsList
 {
@@ -19,64 +18,103 @@ namespace AbstractFirmService.ImplementationsList
 
         public List<PackageViewModel> GetList()
         {
-            List<PackageViewModel> result = source.Packages
-                .Select(rec => new PackageViewModel
+            List<PackageViewModel> result = new List<PackageViewModel>();
+            for (int i = 0; i < source.Packages.Count; ++i)
+            {
+                // требуется дополнительно получить список компонентов для изделия и их количество
+                List<PackageBlankViewModel> packageBlanks = new List<PackageBlankViewModel>();
+                for (int j = 0; j < source.PackageBlanks.Count; ++j)
                 {
-                    Id = rec.Id,
-                    PackageName = rec.PackageName,
-                    Price = rec.Price,
-                    PackageBlanks = source.PackageBlanks
-                            .Where(recPC => recPC.PackageId == rec.Id)
-                            .Select(recPC => new PackageBlankViewModel
+                    if (source.PackageBlanks[j].PackageId == source.Packages[i].Id)
+                    {
+                        string blankName = string.Empty;
+                        for (int k = 0; k < source.Blanks.Count; ++k)
+                        {
+                            if (source.PackageBlanks[j].BlankId == source.Blanks[k].Id)
                             {
-                                Id = recPC.Id,
-                                PackageId = recPC.PackageId,
-                                BlankId = recPC.BlankId,
-                                BlankName = source.Blanks
-                                    .FirstOrDefault(recC => recC.Id == recPC.BlankId)?.BlankName,
-                                Count = recPC.Count
-                            })
-                            .ToList()
-                })
-                .ToList();
+                                blankName = source.Blanks[k].BlankName;
+                                break;
+                            }
+                        }
+                        packageBlanks.Add(new PackageBlankViewModel
+                        {
+                            Id = source.PackageBlanks[j].Id,
+                            PackageId = source.PackageBlanks[j].PackageId,
+                            BlankId = source.PackageBlanks[j].BlankId,
+                            BlankName = blankName,
+                            Count = source.PackageBlanks[j].Count
+                        });
+                    }
+                }
+                result.Add(new PackageViewModel
+                {
+                    Id = source.Packages[i].Id,
+                    PackageName = source.Packages[i].PackageName,
+                    Price = source.Packages[i].Price,
+                    PackageBlanks = packageBlanks
+                });
+            }
             return result;
         }
 
         public PackageViewModel GetElement(int id)
         {
-            Package element = source.Packages.FirstOrDefault(rec => rec.Id == id);
-            if (element != null)
+            for (int i = 0; i < source.Packages.Count; ++i)
             {
-                return new PackageViewModel
+                // требуется дополнительно получить список компонентов для изделия и их количество
+                List<PackageBlankViewModel> packageBlanks = new List<PackageBlankViewModel>();
+                for (int j = 0; j < source.PackageBlanks.Count; ++j)
                 {
-                    Id = element.Id,
-                    PackageName = element.PackageName,
-                    Price = element.Price,
-                    PackageBlanks = source.PackageBlanks
-                            .Where(recPC => recPC.PackageId == element.Id)
-                            .Select(recPC => new PackageBlankViewModel
+                    if (source.PackageBlanks[j].PackageId == source.Packages[i].Id)
+                    {
+                        string blankName = string.Empty;
+                        for (int k = 0; k < source.Blanks.Count; ++k)
+                        {
+                            if (source.PackageBlanks[j].BlankId == source.Blanks[k].Id)
                             {
-                                Id = recPC.Id,
-                                PackageId = recPC.PackageId,
-                                BlankId = recPC.BlankId,
-                                BlankName = source.Blanks
-                                        .FirstOrDefault(recC => recC.Id == recPC.BlankId)?.BlankName,
-                                Count = recPC.Count
-                            })
-                            .ToList()
-                };
+                                blankName = source.Blanks[k].BlankName;
+                                break;
+                            }
+                        }
+                        packageBlanks.Add(new PackageBlankViewModel
+                        {
+                            Id = source.PackageBlanks[j].Id,
+                            PackageId = source.PackageBlanks[j].PackageId,
+                            BlankId = source.PackageBlanks[j].BlankId,
+                            BlankName = blankName,
+                            Count = source.PackageBlanks[j].Count
+                        });
+                    }
+                }
+                if (source.Packages[i].Id == id)
+                {
+                    return new PackageViewModel
+                    {
+                        Id = source.Packages[i].Id,
+                        PackageName = source.Packages[i].PackageName,
+                        Price = source.Packages[i].Price,
+                        PackageBlanks = packageBlanks
+                    };
+                }
             }
+
             throw new Exception("Элемент не найден");
         }
 
         public void AddElement(PackageBindingModel model)
         {
-            Package element = source.Packages.FirstOrDefault(rec => rec.PackageName == model.PackageName);
-            if (element != null)
+            int maxId = 0;
+            for (int i = 0; i < source.Packages.Count; ++i)
             {
-                throw new Exception("Уже есть изделие с таким названием");
+                if (source.Packages[i].Id > maxId)
+                {
+                    maxId = source.Packages[i].Id;
+                }
+                if (source.Packages[i].PackageName == model.PackageName)
+                {
+                    throw new Exception("Уже есть изделие с таким названием");
+                }
             }
-            int maxId = source.Packages.Count > 0 ? source.Packages.Max(rec => rec.Id) : 0;
             source.Packages.Add(new Package
             {
                 Id = maxId + 1,
@@ -84,102 +122,143 @@ namespace AbstractFirmService.ImplementationsList
                 Price = model.Price
             });
             // компоненты для изделия
-            int maxPCId = source.PackageBlanks.Count > 0 ?
-                                    source.PackageBlanks.Max(rec => rec.Id) : 0;
+            int maxPCId = 0;
+            for (int i = 0; i < source.PackageBlanks.Count; ++i)
+            {
+                if (source.PackageBlanks[i].Id > maxPCId)
+                {
+                    maxPCId = source.PackageBlanks[i].Id;
+                }
+            }
             // убираем дубли по компонентам
-            var groupBlanks = model.PackageBlanks
-                                        .GroupBy(rec => rec.BlankId)
-                                        .Select(rec => new
-                                        {
-                                            BlankId = rec.Key,
-                                            Count = rec.Sum(r => r.Count)
-                                        });
+            for (int i = 0; i < model.PackageBlanks.Count; ++i)
+            {
+                for (int j = 1; j < model.PackageBlanks.Count; ++j)
+                {
+                    if (model.PackageBlanks[i].BlankId ==
+                        model.PackageBlanks[j].BlankId)
+                    {
+                        model.PackageBlanks[i].Count +=
+                            model.PackageBlanks[j].Count;
+                        model.PackageBlanks.RemoveAt(j--);
+                    }
+                }
+            }
             // добавляем компоненты
-            foreach (var groupBlank in groupBlanks)
+            for (int i = 0; i < model.PackageBlanks.Count; ++i)
             {
                 source.PackageBlanks.Add(new PackageBlank
                 {
                     Id = ++maxPCId,
                     PackageId = maxId + 1,
-                    BlankId = groupBlank.BlankId,
-                    Count = groupBlank.Count
+                    BlankId = model.PackageBlanks[i].BlankId,
+                    Count = model.PackageBlanks[i].Count
                 });
             }
         }
 
         public void UpdElement(PackageBindingModel model)
         {
-            Package element = source.Packages.FirstOrDefault(rec =>
-                                        rec.PackageName == model.PackageName && rec.Id != model.Id);
-            if (element != null)
+            int index = -1;
+            for (int i = 0; i < source.Packages.Count; ++i)
             {
-                throw new Exception("Уже есть изделие с таким названием");
+                if (source.Packages[i].Id == model.Id)
+                {
+                    index = i;
+                }
+                if (source.Packages[i].PackageName == model.PackageName &&
+                    source.Packages[i].Id != model.Id)
+                {
+                    throw new Exception("Уже есть изделие с таким названием");
+                }
             }
-            element = source.Packages.FirstOrDefault(rec => rec.Id == model.Id);
-            if (element == null)
+            if (index == -1)
             {
                 throw new Exception("Элемент не найден");
             }
-            element.PackageName = model.PackageName;
-            element.Price = model.Price;
-
-            int maxPCId = source.PackageBlanks.Count > 0 ? source.PackageBlanks.Max(rec => rec.Id) : 0;
-            // обновляем существуюущие компоненты
-            var compIds = model.PackageBlanks.Select(rec => rec.BlankId).Distinct();
-            var updateBlanks = source.PackageBlanks
-                                            .Where(rec => rec.PackageId == model.Id &&
-                                           compIds.Contains(rec.BlankId));
-            foreach (var updateBlank in updateBlanks)
+            source.Packages[index].PackageName = model.PackageName;
+            source.Packages[index].Price = model.Price;
+            int maxPCId = 0;
+            for (int i = 0; i < source.PackageBlanks.Count; ++i)
             {
-                updateBlank.Count = model.PackageBlanks
-                                                .FirstOrDefault(rec => rec.Id == updateBlank.Id).Count;
-            }
-            source.PackageBlanks.RemoveAll(rec => rec.PackageId == model.Id &&
-                                       !compIds.Contains(rec.BlankId));
-            // новые записи
-            var groupBlanks = model.PackageBlanks
-                                        .Where(rec => rec.Id == 0)
-                                        .GroupBy(rec => rec.BlankId)
-                                        .Select(rec => new
-                                        {
-                                            BlankId = rec.Key,
-                                            Count = rec.Sum(r => r.Count)
-                                        });
-            foreach (var groupBlank in groupBlanks)
-            {
-                PackageBlank elementPC = source.PackageBlanks
-                                        .FirstOrDefault(rec => rec.PackageId == model.Id &&
-                                                        rec.BlankId == groupBlank.BlankId);
-                if (elementPC != null)
+                if (source.PackageBlanks[i].Id > maxPCId)
                 {
-                    elementPC.Count += groupBlank.Count;
+                    maxPCId = source.PackageBlanks[i].Id;
                 }
-                else
+            }
+            // обновляем существуюущие компоненты
+            for (int i = 0; i < source.PackageBlanks.Count; ++i)
+            {
+                if (source.PackageBlanks[i].PackageId == model.Id)
                 {
-                    source.PackageBlanks.Add(new PackageBlank
+                    bool flag = true;
+                    for (int j = 0; j < model.PackageBlanks.Count; ++j)
                     {
-                        Id = ++maxPCId,
-                        PackageId = model.Id,
-                        BlankId = groupBlank.BlankId,
-                        Count = groupBlank.Count
-                    });
+                        // если встретили, то изменяем количество
+                        if (source.PackageBlanks[i].Id == model.PackageBlanks[j].Id)
+                        {
+                            source.PackageBlanks[i].Count = model.PackageBlanks[j].Count;
+                            flag = false;
+                            break;
+                        }
+                    }
+                    // если не встретили, то удаляем
+                    if (flag)
+                    {
+                        source.PackageBlanks.RemoveAt(i--);
+                    }
+                }
+            }
+            // новые записи
+            for (int i = 0; i < model.PackageBlanks.Count; ++i)
+            {
+                if (model.PackageBlanks[i].Id == 0)
+                {
+                    // ищем дубли
+                    for (int j = 0; j < source.PackageBlanks.Count; ++j)
+                    {
+                        if (source.PackageBlanks[j].PackageId == model.Id &&
+                            source.PackageBlanks[j].BlankId == model.PackageBlanks[i].BlankId)
+                        {
+                            source.PackageBlanks[j].Count += model.PackageBlanks[i].Count;
+                            model.PackageBlanks[i].Id = source.PackageBlanks[j].Id;
+                            break;
+                        }
+                    }
+                    // если не нашли дубли, то новая запись
+                    if (model.PackageBlanks[i].Id == 0)
+                    {
+                        source.PackageBlanks.Add(new PackageBlank
+                        {
+                            Id = ++maxPCId,
+                            PackageId = model.Id,
+                            BlankId = model.PackageBlanks[i].BlankId,
+                            Count = model.PackageBlanks[i].Count
+                        });
+                    }
                 }
             }
         }
 
         public void DelElement(int id)
         {
-            Package element = source.Packages.FirstOrDefault(rec => rec.Id == id);
-            if (element != null)
+            // удаяем записи по компонентам при удалении изделия
+            for (int i = 0; i < source.PackageBlanks.Count; ++i)
             {
-                // удаяем записи по компонентам при удалении изделия
-                source.PackageBlanks.RemoveAll(rec => rec.PackageId == id);
-                source.Packages.Remove(element);
+                if (source.PackageBlanks[i].PackageId == id)
+                {
+                    source.PackageBlanks.RemoveAt(i--);
+                }
             }
-            else
+            for (int i = 0; i < source.Packages.Count; ++i)
             {
-                throw new Exception("Элемент не найден");
+                if (source.Packages[i].Id == id)
+                {
+                    source.Packages.RemoveAt(i);
+                    return;
+                }
             }
+            throw new Exception("Элемент не найден");
         }
     }
 }

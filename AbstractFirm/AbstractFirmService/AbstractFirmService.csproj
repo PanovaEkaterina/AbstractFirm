@@ -30,7 +30,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -40,6 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AbstractDbContext.cs" />
     <Compile Include="BindingModel\ArchiveBindingModel.cs" />
     <Compile Include="BindingModel\ArchiveBlankBindingModel.cs" />
     <Compile Include="BindingModel\BlankBindingModel.cs" />
@@ -49,6 +57,12 @@
     <Compile Include="BindingModel\PackageBlankBindingModel.cs" />
     <Compile Include="BindingModel\RequestBindingModel.cs" />
     <Compile Include="DataList.cs" />
+    <Compile Include="ImplementationsBD\ArchiveServiceBD.cs" />
+    <Compile Include="ImplementationsBD\BlankServiceBD.cs" />
+    <Compile Include="ImplementationsBD\KlientServiceBD .cs" />
+    <Compile Include="ImplementationsBD\LawyerServiceBD.cs" />
+    <Compile Include="ImplementationsBD\MainServiceBD .cs" />
+    <Compile Include="ImplementationsBD\PackageServiceBD.cs" />
     <Compile Include="ImplementationsList\ArchiveServiceList.cs" />
     <Compile Include="ImplementationsList\BlankServiceList .cs" />
     <Compile Include="ImplementationsList\KlientServiceList.cs" />
@@ -61,6 +75,11 @@
     <Compile Include="Interfaces\ILawyerService.cs" />
     <Compile Include="Interfaces\IMainService.cs" />
     <Compile Include="Interfaces\IPackageService.cs" />
+    <Compile Include="Migrations\201805061644228_FirstMigration.cs" />
+    <Compile Include="Migrations\201805061644228_FirstMigration.Designer.cs">
+      <DependentUpon>201805061644228_FirstMigration.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ViewModel\ArchiveBlankViewModel.cs" />
     <Compile Include="ViewModel\ArchiveViewModel.cs" />
@@ -76,6 +95,15 @@
       <Project>{23C74D2B-074E-41EE-B513-5060A1F0665F}</Project>
       <Name>AbstractFirmModel</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\201805061644228_FirstMigration.resx">
+      <DependentUpon>201805061644228_FirstMigration.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

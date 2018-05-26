@@ -4,7 +4,6 @@ using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace AbstractFirmService.ImplementationsList
 {
@@ -19,32 +18,68 @@ namespace AbstractFirmService.ImplementationsList
 
         public List<RequestViewModel> GetList()
         {
-            List<RequestViewModel> result = source.Requests
-                .Select(rec => new RequestViewModel
+            List<RequestViewModel> result = new List<RequestViewModel>();
+            for (int i = 0; i < source.Requests.Count; ++i)
+            {
+                string KlientFIO = string.Empty;
+                for (int j = 0; j < source.Klients.Count; ++j)
                 {
-                    Id = rec.Id,
-                    KlientId = rec.KlientId,
-                    PackageId = rec.PackageId,
-                    LawyerId = rec.LawyerId,
-                    DateCreate = rec.DateCreate.ToLongDateString(),
-                    DateLawyer = rec.DateImplement?.ToLongDateString(),
-                    Status = rec.Status.ToString(),
-                    Count = rec.Count,
-                    Sum = rec.Sum,
-                    KlientFIO = source.Klients
-                                    .FirstOrDefault(recC => recC.Id == rec.KlientId)?.KlientFIO,
-                    PackageName = source.Packages
-                                    .FirstOrDefault(recP => recP.Id == rec.PackageId)?.PackageName,
-                    LawyerName = source.Lawyers
-                                    .FirstOrDefault(recI => recI.Id == rec.LawyerId)?.LawyerFIO
-                })
-                .ToList();
+                    if (source.Klients[j].Id == source.Requests[i].KlientId)
+                    {
+                        KlientFIO = source.Klients[j].KlientFIO;
+                        break;
+                    }
+                }
+                string packageName= string.Empty;
+                for (int j = 0; j < source.Packages.Count; ++j)
+                {
+                    if (source.Packages[j].Id == source.Requests[i].PackageId)
+                    {
+                        packageName= source.Packages[j].PackageName;
+                        break;
+                    }
+                }
+                string lawyerFIO = string.Empty;
+                if (source.Requests[i].LawyerId.HasValue)
+                {
+                    for (int j = 0; j < source.Lawyers.Count; ++j)
+                    {
+                        if (source.Lawyers[j].Id == source.Requests[i].LawyerId.Value)
+                        {
+                            lawyerFIO = source.Lawyers[j].LawyerFIO;
+                            break;
+                        }
+                    }
+                }
+                result.Add(new RequestViewModel
+                {
+                    Id = source.Requests[i].Id,
+                    KlientId = source.Requests[i].KlientId,
+                    KlientFIO = KlientFIO,
+                    PackageId = source.Requests[i].PackageId,
+                    PackageName = packageName,
+                    LawyerId = source.Requests[i].LawyerId,
+                    LawyerName = lawyerFIO,
+                    Count = source.Requests[i].Count,
+                    Sum = source.Requests[i].Sum,
+                    DateCreate = source.Requests[i].DateCreate.ToLongDateString(),
+                    DateLawyer = source.Requests[i].DateImplement?.ToLongDateString(),
+                    Status = source.Requests[i].Status.ToString()
+                });
+            }
             return result;
         }
 
         public void CreateRequest(RequestBindingModel model)
         {
-            int maxId = source.Requests.Count > 0 ? source.Requests.Max(rec => rec.Id) : 0;
+            int maxId = 0;
+            for (int i = 0; i < source.Requests.Count; ++i)
+            {
+                if (source.Requests[i].Id > maxId)
+                {
+                    maxId = source.Klients[i].Id;
+                }
+            }
             source.Requests.Add(new Request
             {
                 Id = maxId + 1,
@@ -59,92 +94,134 @@ namespace AbstractFirmService.ImplementationsList
 
         public void TakeRequestInWork(RequestBindingModel model)
         {
-            Request element = source.Requests.FirstOrDefault(rec => rec.Id == model.Id);
-            if (element == null)
+            int index = -1;
+            for (int i = 0; i < source.Requests.Count; ++i)
+            {
+                if (source.Requests[i].Id == model.Id)
+                {
+                    index = i;
+                    break;
+                }
+            }
+            if (index == -1)
             {
                 throw new Exception("Элемент не найден");
             }
             // смотрим по количеству компонентов на складах
-            var productBlanks = source.PackageBlanks.Where(rec => rec.PackageId == element.PackageId);
-            foreach (var productBlank in productBlanks)
+            for (int i = 0; i < source.PackageBlanks.Count; ++i)
             {
-                int countOnArchives = source.ArchiveBlanks
-                                            .Where(rec => rec.BlankId == productBlank.BlankId)
-                                            .Sum(rec => rec.Count);
-                if (countOnArchives < productBlank.Count * element.Count)
+                if (source.PackageBlanks[i].PackageId == source.Requests[index].PackageId)
                 {
-                    var BlankName = source.Blanks
-                                    .FirstOrDefault(rec => rec.Id == productBlank.BlankId);
-                    throw new Exception("Не достаточно компонента " + BlankName?.BlankName +
-                        " требуется " + productBlank.Count + ", в наличии " + countOnArchives);
+                    int countOnArchives = 0;
+                    for (int j = 0; j < source.ArchiveBlanks.Count; ++j)
+                    {
+                        if (source.ArchiveBlanks[j].BlankId == source.PackageBlanks[i].BlankId)
+                        {
+                            countOnArchives += source.ArchiveBlanks[j].Count;
+                        }
+                    }
+                    if (countOnArchives < source.PackageBlanks[i].Count * source.Requests[index].Count)
+                    {
+                        for (int j = 0; j < source.Blanks.Count; ++j)
+                        {
+                            if (source.Blanks[j].Id == source.PackageBlanks[i].BlankId)
+                            {
+                                throw new Exception("Не достаточно компонента " + source.Blanks[j].BlankName +
+                                    " требуется " + source.PackageBlanks[i].Count + ", в наличии " + countOnArchives);
+                            }
+                        }
+                    }
                 }
             }
             // списываем
-            foreach (var productBlank in productBlanks)
+            for (int i = 0; i < source.PackageBlanks.Count; ++i)
             {
-                int countOnArchives = productBlank.Count * element.Count;
-                var ArchiveBlanks = source.ArchiveBlanks
-                                            .Where(rec => rec.BlankId == productBlank.BlankId);
-                foreach (var ArchiveBlank in ArchiveBlanks)
+                if (source.PackageBlanks[i].PackageId == source.Requests[index].PackageId)
                 {
-                    // компонентов на одном слкаде может не хватать
-                    if (ArchiveBlank.Count >= countOnArchives)
+                    int countOnArchives = source.PackageBlanks[i].Count * source.Requests[index].Count;
+                    for (int j = 0; j < source.ArchiveBlanks.Count; ++j)
                     {
-                        ArchiveBlank.Count -= countOnArchives;
-                        break;
-                    }
-                    else
-                    {
-                        countOnArchives -= ArchiveBlank.Count;
-                        ArchiveBlank.Count = 0;
+                        if (source.ArchiveBlanks[j].BlankId == source.PackageBlanks[i].BlankId)
+                        {
+                            // компонентов на одном слкаде может не хватать
+                            if (source.ArchiveBlanks[j].Count >= countOnArchives)
+                            {
+                                source.ArchiveBlanks[j].Count -= countOnArchives;
+                                break;
+                            }
+                            else
+                            {
+                                countOnArchives -= source.ArchiveBlanks[j].Count;
+                                source.ArchiveBlanks[j].Count = 0;
+                            }
+                        }
                     }
                 }
             }
-            element.LawyerId = model.LawyerId;
-            element.DateImplement = DateTime.Now;
-            element.Status = RequestStatus.Выполняется;
+            source.Requests[index].LawyerId = model.LawyerId;
+            source.Requests[index].DateImplement = DateTime.Now;
+            source.Requests[index].Status = RequestStatus.Выполняется;
         }
 
         public void FinishRequest(int id)
         {
-            Request element = source.Requests.FirstOrDefault(rec => rec.Id == id);
-            if (element == null)
+            int index = -1;
+            for (int i = 0; i < source.Requests.Count; ++i)
+            {
+                if (source.Klients[i].Id == id)
+                {
+                    index = i;
+                    break;
+                }
+            }
+            if (index == -1)
             {
                 throw new Exception("Элемент не найден");
             }
-            element.Status = RequestStatus.Готов;
+            source.Requests[index].Status = RequestStatus.Готов;
         }
 
         public void PayRequest(int id)
         {
-            Request element = source.Requests.FirstOrDefault(rec => rec.Id == id);
-            if (element == null)
+            int index = -1;
+            for (int i = 0; i < source.Requests.Count; ++i)
+            {
+                if (source.Klients[i].Id == id)
+                {
+                    index = i;
+                    break;
+                }
+            }
+            if (index == -1)
             {
                 throw new Exception("Элемент не найден");
             }
-            element.Status = RequestStatus.Оплачен;
+            source.Requests[index].Status = RequestStatus.Оплачен;
         }
 
         public void PutBlankOnArchive(ArchiveBlankBindingModel model)
         {
-            ArchiveBlank element = source.ArchiveBlanks
-                                                .FirstOrDefault(rec => rec.ArchiveId == model.ArchiveId &&
-                                                                    rec.BlankId == model.BlankId);
-            if (element != null)
+            int maxId = 0;
+            for (int i = 0; i < source.ArchiveBlanks.Count; ++i)
             {
-                element.Count += model.Count;
-            }
-            else
-            {
-                int maxId = source.ArchiveBlanks.Count > 0 ? source.ArchiveBlanks.Max(rec => rec.Id) : 0;
-                source.ArchiveBlanks.Add(new ArchiveBlank
+                if (source.ArchiveBlanks[i].ArchiveId == model.ArchiveId &&
+                    source.ArchiveBlanks[i].BlankId == model.BlankId)
                 {
-                    Id = ++maxId,
-                    ArchiveId = model.ArchiveId,
-                    BlankId = model.BlankId,
-                    Count = model.Count
-                });
+                    source.ArchiveBlanks[i].Count += model.Count;
+                    return;
+                }
+                if (source.ArchiveBlanks[i].Id > maxId)
+                {
+                    maxId = source.ArchiveBlanks[i].Id;
+                }
             }
+            source.ArchiveBlanks.Add(new ArchiveBlank
+            {
+                Id = ++maxId,
+                ArchiveId = model.ArchiveId,
+                BlankId = model.BlankId,
+                Count = model.Count
+            });
         }
     }
 }

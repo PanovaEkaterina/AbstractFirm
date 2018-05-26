@@ -1,0 +1,30 @@
+﻿<Window x:Class="AbstractFirmViewWPF.FormMain"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AbstractFirmViewWPF"
+        mc:Ignorable="d"
+       Title="Юридическая фирма" Height="340" Width="1081.5" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+    <Grid>
+        <Menu x:Name="menu" HorizontalAlignment="Left" Height="22" VerticalAlignment="Top" Width="1047" Margin="10,0,0,0">
+            <MenuItem Header="Справочники" Height="22" Width="105">
+                <MenuItem Header="Клиенты" HorizontalAlignment="Left" Height="28" Width="135" Margin="0,0,-21,0" Click="клиентыToolStripMenuItem_Click"/>
+                <MenuItem Header="Бланки" HorizontalAlignment="Left" Height="24" Width="158" Margin="0,0,-18,0" Click="бланкиToolStripMenuItem_Click"/>
+                <MenuItem Header="Пакеты документов" HorizontalAlignment="Left" Height="28" Width="135" Margin="0,0,-21,0" Click="пакетдокументовToolStripMenuItem_Click"/>
+                <MenuItem Header="Архивы" HorizontalAlignment="Left" Height="28" Width="135" Margin="0,0,-21,0" Click="архивыToolStripMenuItem_Click"/>
+                <MenuItem Header="Юристы" HorizontalAlignment="Left" Height="28" Width="161" Margin="0,0,-21,0" Click="юристыToolStripMenuItem_Click"/>
+
+            </MenuItem>
+            <MenuItem Header="Пополнить архив" Height="22" Width="135" Click="пополнитьАрхивToolStripMenuItem_Click"/>
+        </Menu>
+        <DataGrid x:Name="dataGridViewMain" HorizontalAlignment="Left" Height="272" Margin="0,27,0,0" VerticalAlignment="Top" Width="880" IsReadOnly="True"/>
+        <Button x:Name="buttonCreateRequest" Content="Создать заказ" HorizontalAlignment="Left" Margin="909,48,0,0" VerticalAlignment="Top" Width="138" Height="28" Click="buttonCreateRequest_Click"/>
+        <Button x:Name="buttonTakeRequestInWork" Content="Отдать на выполнение" HorizontalAlignment="Left" Margin="909,100,0,0" VerticalAlignment="Top" Width="138" Height="28" Click="buttonTakeRequestInWork_Click"/>
+        <Button x:Name="buttonRequestReady" Content="Заказ готов" HorizontalAlignment="Left" Margin="909,154,0,0" VerticalAlignment="Top" Width="138" Height="28" Click="buttonRequestReady_Click"/>
+        <Button x:Name="buttonPayRequest" Content="Заказ оплачен" HorizontalAlignment="Left" Margin="909,202,0,0" VerticalAlignment="Top" Width="138" Height="28" Click="buttonPayRequest_Click"/>
+
+        <Button x:Name="buttonRef" Content="Обновить список" HorizontalAlignment="Left" Margin="909,254,0,0" VerticalAlignment="Top" Width="138" Height="28" Click="buttonRef_Click"/>
+
+    </Grid>
+</Window>

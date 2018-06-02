@@ -1,0 +1,18 @@
+﻿<Window x:Class="AbstractFirmViewWPF.FormArchivesLoad"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AbstractFirmViewWPF"
+        mc:Ignorable="d"
+        Title="Загруженность архивов" Height="459.62" Width="774.446">
+    <Grid Margin="0,0,109,99">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="559*"/>
+            <ColumnDefinition Width="117*"/>
+            <ColumnDefinition Width="116*"/>
+        </Grid.ColumnDefinitions>
+        <DataGrid x:Name="dataGridView" HorizontalAlignment="Left" Height="320" VerticalAlignment="Top" Width="443" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" IsReadOnly="True"/>
+        <Button x:Name="buttonSaveToExcel" Content="Сохранить excel" HorizontalAlignment="Left" Margin="12,26,0,0" VerticalAlignment="Top" Width="137" Click="buttonSaveToExcel_Click" Grid.Column="1" Grid.ColumnSpan="2"/>
+    </Grid>
+</Window>

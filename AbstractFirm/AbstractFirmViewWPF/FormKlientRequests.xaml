@@ -1,0 +1,18 @@
+﻿<Window x:Class="AbstractFirmViewWPF.FormKlientRequests"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:rv="clr-namespace:Microsoft.Reporting.WinForms;assembly=Microsoft.ReportViewer.WinForms" 
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Заказы клиентов" Height="450" Width="800">
+    <Grid>
+        <DatePicker x:Name="dateTimePickerFrom" HorizontalAlignment="Left" Height="27" Margin="10,10,0,0" VerticalAlignment="Top" Width="154" SelectedDateFormat="Long"/>
+        <DatePicker x:Name="dateTimePickerTo" HorizontalAlignment="Left" Height="27" Margin="240,10,0,0" VerticalAlignment="Top" Width="157" SelectedDateFormat="Long"/>
+        <Button Content="В pdf" HorizontalAlignment="Left" Height="27" Margin="620,10,0,0" VerticalAlignment="Top" Width="137" Click="buttonToPdf_Click" />
+        <Button Content="Сформировать" HorizontalAlignment="Left" Height="27" Margin="438,8,0,0" VerticalAlignment="Top" Width="137" Click="buttonMake_Click" />
+        <WindowsFormsHost Margin="10,61,35,26" >
+            <rv:ReportViewer x:Name="reportViewer"/>
+        </WindowsFormsHost>
+    </Grid>
+</Window>

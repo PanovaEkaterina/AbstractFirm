@@ -34,6 +34,7 @@ namespace AbstractFirmViewWPF
             currentContainer.RegisterType<IPackageService, PackageServiceBD>(new HierarchicalLifetimeManager());
             currentContainer.RegisterType<IArchiveService, ArchiveServiceBD>(new HierarchicalLifetimeManager());
             currentContainer.RegisterType<IMainService, MainServiceBD>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<IReportService, ReportServiceBD>(new HierarchicalLifetimeManager());
 
             return currentContainer;
         }

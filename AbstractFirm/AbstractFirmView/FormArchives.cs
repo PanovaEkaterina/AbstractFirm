@@ -2,6 +2,7 @@
 using AbstractFirmService.ViewModel;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace AbstractFirmView
@@ -22,24 +23,20 @@ namespace AbstractFirmView
         {
             try
             {
-                var response = APIKlient.GetRequest("api/Archive/GetList");
-                if (response.Result.IsSuccessStatusCode)
+                List<ArchiveViewModel> list = Task.Run(() => APIKlient.GetRequestData<List<ArchiveViewModel>>("api/Archive/GetList")).Result;
+                if (list != null)
                 {
-                    List<ArchiveViewModel> list = APIKlient.GetElement<List<ArchiveViewModel>>(response);
-                    if (list != null)
-                    {
-                        dataGridView.DataSource = list;
-                        dataGridView.Columns[0].Visible = false;
-                        dataGridView.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                    }
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
+                    dataGridView.DataSource = list;
+                    dataGridView.Columns[0].Visible = false;
+                    dataGridView.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 }
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -47,22 +44,18 @@ namespace AbstractFirmView
         private void buttonAdd_Click(object sender, EventArgs e)
         {
             var form = new FormArchive();
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                LoadData();
-            }
+            form.ShowDialog();
         }
 
         private void buttonUpd_Click(object sender, EventArgs e)
         {
             if (dataGridView.SelectedRows.Count == 1)
             {
-                var form = new FormArchive();
-                form.Id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value);
-                if (form.ShowDialog() == DialogResult.OK)
+                var form = new FormArchive
                 {
-                    LoadData();
-                }
+                    Id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value)
+                };
+                form.ShowDialog();
             }
         }
 
@@ -73,19 +66,21 @@ namespace AbstractFirmView
                 if (MessageBox.Show("Удалить запись", "Вопрос", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
                     int id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value);
-                    try
+
+                    Task task = Task.Run(() => APIKlient.PostRequestData("api/Archive/DelElement", new KlientBindingModel { Id = id }));
+
+                    task.ContinueWith((prevTask) => MessageBox.Show("Запись удалена. Обновите список", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information),
+                    TaskContinuationOptions.OnlyOnRanToCompletion);
+
+                    task.ContinueWith((prevTask) =>
                     {
-                        var response = APIKlient.PostRequest("api/Archive/DelElement", new KlientBindingModel { Id = id });
-                        if (!response.Result.IsSuccessStatusCode)
+                        var ex = (Exception)prevTask.Exception;
+                        while (ex.InnerException != null)
                         {
-                            throw new Exception(APIKlient.GetError(response));
+                            ex = ex.InnerException;
                         }
-                    }
-                    catch (Exception ex)
-                    {
                         MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                    LoadData();
+                    }, TaskContinuationOptions.OnlyOnFaulted);
                 }
             }
         }

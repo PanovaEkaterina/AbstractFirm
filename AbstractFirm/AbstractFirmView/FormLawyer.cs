@@ -1,7 +1,6 @@
 ﻿using AbstractFirmService.BindingModel;
 using AbstractFirmService.ViewModel;
 using System;
-using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -24,19 +23,15 @@ namespace AbstractFirmView
             {
                 try
                 {
-                    var response = APIKlient.GetRequest("api/Lawyer/Get/" + id.Value);
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        var Lawyer = APIKlient.GetElement<LawyerViewModel>(response);
-                        textBoxFIO.Text = Lawyer.LawyerFIO;
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
-                    }
+                    var implementer = Task.Run(() => APIKlient.GetRequestData<LawyerViewModel>("api/Lawyer/Get/" + id.Value)).Result;
+                    textBoxFIO.Text = implementer.LawyerFIO;
                 }
                 catch (Exception ex)
                 {
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -49,44 +44,41 @@ namespace AbstractFirmView
                 MessageBox.Show("Заполните ФИО", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            try
+            string fio = textBoxFIO.Text;
+            Task task;
+            if (id.HasValue)
             {
-                Task<HttpResponseMessage> response;
-                if (id.HasValue)
+                task = Task.Run(() => APIKlient.PostRequestData("api/Lawyer/UpdElement", new LawyerBindingModel
                 {
-                    response = APIKlient.PostRequest("api/Lawyer/UpdElement", new LawyerBindingModel
-                    {
-                        Id = id.Value,
-                        LawyerFIO = textBoxFIO.Text
-                    });
-                }
-                else
-                {
-                    response = APIKlient.PostRequest("api/Lawyer/AddElement", new LawyerBindingModel
-                    {
-                        LawyerFIO = textBoxFIO.Text
-                    });
-                }
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
+                    Id = id.Value,
+                    LawyerFIO = fio
+                }));
             }
-            catch (Exception ex)
+            else
             {
+                task = Task.Run(() => APIKlient.PostRequestData("api/Lawyer/AddElement", new LawyerBindingModel
+                {
+                    LawyerFIO = fio
+                }));
+            }
+
+            task.ContinueWith((prevTask) => MessageBox.Show("Сохранение прошло успешно. Обновите список", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+            task.ContinueWith((prevTask) =>
+            {
+                var ex = (Exception)prevTask.Exception;
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            }, TaskContinuationOptions.OnlyOnFaulted);
+
+            Close();
         }
 
         private void buttonCancel_Click(object sender, EventArgs e)
         {
-            DialogResult = DialogResult.Cancel;
             Close();
         }
     }

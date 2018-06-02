@@ -4,6 +4,7 @@ using AbstractFirmView;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -23,27 +24,23 @@ namespace AbstractFirmViewWPF
         {
             try
             {
-                var response = APIKlient.GetRequest("api/Main/GetList");
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    List<RequestViewModel> list = APIKlient.GetElement<List<RequestViewModel>>(response);
-                    if (list != null)
-                    {
+                List<RequestViewModel> list = Task.Run(() => APIKlient.GetRequestData<List<RequestViewModel>>("api/Main/GetList")).Result;
+                if (list != null)
+                 {
                         dataGridViewMain.ItemsSource = list;
                         dataGridViewMain.Columns[0].Visibility = Visibility.Hidden;
                         dataGridViewMain.Columns[1].Visibility = Visibility.Hidden;
                         dataGridViewMain.Columns[3].Visibility = Visibility.Hidden;
                         dataGridViewMain.Columns[5].Visibility = Visibility.Hidden;
                         dataGridViewMain.Columns[1].Width = DataGridLength.Auto;
-                    }
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
+                 }
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -110,25 +107,23 @@ namespace AbstractFirmViewWPF
             if (dataGridViewMain.SelectedItem != null)
             {
                 int id = ((RequestViewModel)dataGridViewMain.SelectedItem).Id;
-                try
+                Task task = Task.Run(() => APIKlient.PostRequestData("api/Main/FinishRequest", new RequestBindingModel
                 {
-                    var response = APIKlient.PostRequest("api/Main/FinishRequest", new RequestBindingModel
-                    {
-                        Id = id
-                    });
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        LoadData();
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
-                    }
-                }
-                catch (Exception ex)
+                    Id = id
+                }));
+
+                task.ContinueWith((prevTask) => MessageBox.Show("Статус заказа изменен. Обновите список", "Успех", MessageBoxButton.OK, MessageBoxImage.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+
+                task.ContinueWith((prevTask) =>
                 {
+                    var ex = (Exception)prevTask.Exception;
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                }, TaskContinuationOptions.OnlyOnFaulted);
             }
         }
 
@@ -137,25 +132,23 @@ namespace AbstractFirmViewWPF
             if (dataGridViewMain.SelectedItem != null)
             {
                 int id = ((RequestViewModel)dataGridViewMain.SelectedItem).Id;
-                try
+                Task task = Task.Run(() => APIKlient.PostRequestData("api/Main/PayRequest", new RequestBindingModel
                 {
-                    var response = APIKlient.PostRequest("api/Main/.PayRequest", new RequestBindingModel
-                    {
-                        Id = id
-                    });
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        LoadData();
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
-                    }
-                }
-                catch (Exception ex)
+                    Id = id
+                }));
+
+                task.ContinueWith((prevTask) => MessageBox.Show("Статус заказа изменен. Обновите список", "Успех", MessageBoxButton.OK, MessageBoxImage.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+
+                task.ContinueWith((prevTask) =>
                 {
+                    var ex = (Exception)prevTask.Exception;
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                }, TaskContinuationOptions.OnlyOnFaulted);
             }
         }
 
@@ -172,25 +165,24 @@ namespace AbstractFirmViewWPF
             };
             if (sfd.ShowDialog() == true)
             {
-                try
+                string fileName = sfd.FileName;
+                Task task = Task.Run(() => APIKlient.PostRequestData("api/Report/SavePackagePrice", new ReportBindingModel
                 {
-                    var response = APIKlient.PostRequest("api/Report/SavePackagePrice", new ReportBindingModel
-                    {
-                        FileName = sfd.FileName
-                    });
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
-                    }
-                }
-                catch (Exception ex)
+                    FileName = fileName
+                }));
+
+                task.ContinueWith((prevTask) => MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+
+                task.ContinueWith((prevTask) =>
                 {
+                    var ex = (Exception)prevTask.Exception;
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                }, TaskContinuationOptions.OnlyOnFaulted);
             }
         }
 

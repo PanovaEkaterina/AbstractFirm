@@ -3,6 +3,7 @@ using AbstractFirmService.ViewModel;
 using Microsoft.Reporting.WinForms;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace AbstractFirmView
@@ -28,26 +29,23 @@ namespace AbstractFirmView
                                             " по " + dateTimePickerTo.Value.ToShortDateString());
                 reportViewer.LocalReport.SetParameters(parameter);
 
-                var response = APIKlient.PostRequest("api/Report/GetKlientRequests", new ReportBindingModel
-                {
-                    DateFrom = dateTimePickerFrom.Value,
-                    DateTo = dateTimePickerTo.Value
-                });
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    var dataSource = APIKlient.GetElement<List<KlientRequestsModel>>(response);
-                    ReportDataSource source = new ReportDataSource("DataSetRequests", dataSource);
-                    reportViewer.LocalReport.DataSources.Add(source);
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
+                var dataSource = Task.Run(() => APIKlient.PostRequestData<ReportBindingModel, List<KlientRequestsModel>>("api/Report/GetKlientRequests",
+                    new ReportBindingModel
+                    {
+                        DateFrom = dateTimePickerFrom.Value,
+                        DateTo = dateTimePickerTo.Value
+                    })).Result;
+                ReportDataSource source = new ReportDataSource("DataSetRequests", dataSource);
+                reportViewer.LocalReport.DataSources.Add(source);
 
                 reportViewer.RefreshReport();
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -65,27 +63,26 @@ namespace AbstractFirmView
             };
             if (sfd.ShowDialog() == DialogResult.OK)
             {
-                try
+                string fileName = sfd.FileName;
+                Task task = Task.Run(() => APIKlient.PostRequestData("api/Report/SaveKlientRequests", new ReportBindingModel
                 {
-                    var response = APIKlient.PostRequest("api/Report/SaveKlientRequests", new ReportBindingModel
-                    {
-                        FileName = sfd.FileName,
-                        DateFrom = dateTimePickerFrom.Value,
-                        DateTo = dateTimePickerTo.Value
-                    });
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
-                    }
-                }
-                catch (Exception ex)
+                    FileName = fileName,
+                    DateFrom = dateTimePickerFrom.Value,
+                    DateTo = dateTimePickerTo.Value
+                }));
+
+                task.ContinueWith((prevTask) => MessageBox.Show("Список заказов сохранен", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+
+                task.ContinueWith((prevTask) =>
                 {
+                    var ex = (Exception)prevTask.Exception;
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                }, TaskContinuationOptions.OnlyOnFaulted);
             }
         }
 

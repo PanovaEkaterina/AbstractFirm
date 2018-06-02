@@ -2,7 +2,6 @@
 using AbstractFirmService.ViewModel;
 using AbstractFirmView;
 using System;
-using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -28,20 +27,16 @@ namespace AbstractFirmViewWPF
             if (id.HasValue)
             {
                 try
-                {
-                    var response = APIKlient.GetRequest("api/Klient/Get/" + id.Value);
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        var klient = APIKlient.GetElement<KlientViewModel>(response);
-                        textBoxFullName.Text = klient.KlientFIO;
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
-                    }
+                {  
+                    var klient = Task.Run(() => APIKlient.GetRequestData<KlientViewModel>("api/Klient/Get/" + id.Value)).Result;
+                    textBoxFullName.Text = klient.KlientFIO;          
                 }
                 catch (Exception ex)
                 {
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
@@ -54,44 +49,41 @@ namespace AbstractFirmViewWPF
                 MessageBox.Show("Заполните ФИО", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            try
+            string fio = textBoxFullName.Text;
+            Task task;
+            if (id.HasValue)
             {
-                Task<HttpResponseMessage> response;
-                if (id.HasValue)
+                task = Task.Run(() => APIKlient.PostRequestData("api/Klient/UpdElement", new KlientBindingModel
                 {
-                    response = APIKlient.PostRequest("api/Klient/UpdElement", new KlientBindingModel
-                    {
-                        Id = id.Value,
-                        KlientFIO = textBoxFullName.Text
-                    });
-                }
-                else
-                {
-                    response = APIKlient.PostRequest("api/Klient/AddElement", new KlientBindingModel
-                    {
-                        KlientFIO = textBoxFullName.Text
-                    });
-                }
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
-                    DialogResult = true;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
+                    Id = id.Value,
+                    KlientFIO = fio
+                }));
             }
-            catch (Exception ex)
+            else
             {
+                task = Task.Run(() => APIKlient.PostRequestData("api/Klient/AddElement", new KlientBindingModel
+                {
+                    KlientFIO = fio
+                }));
+            }
+
+            task.ContinueWith((prevTask) => MessageBox.Show("Сохранение прошло успешно. Обновите список", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+            task.ContinueWith((prevTask) =>
+            {
+                var ex = (Exception)prevTask.Exception;
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            }, TaskContinuationOptions.OnlyOnFaulted);
+
+            Close();
         }
 
         private void buttonCancel_Click(object sender, EventArgs e)
         {
-            DialogResult = false;
             Close();
         }
     }

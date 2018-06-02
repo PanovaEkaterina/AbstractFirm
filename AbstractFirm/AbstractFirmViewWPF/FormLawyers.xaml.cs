@@ -3,6 +3,7 @@ using AbstractFirmService.ViewModel;
 using AbstractFirmView;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -28,24 +29,20 @@ namespace AbstractFirmViewWPF
         {
             try
             {
-                var response = APIKlient.GetRequest("api/Lawyer/GetList");
-                if (response.Result.IsSuccessStatusCode)
+                List<LawyerViewModel> list = Task.Run(() => APIKlient.GetRequestData<List<LawyerViewModel>>("api/Lawyer/GetList")).Result;
+                if (list != null)
                 {
-                    List<LawyerViewModel> list = APIKlient.GetElement<List<LawyerViewModel>>(response);
-                    if (list != null)
-                    {
                         dataGridViewLawyers.ItemsSource = list;
                         dataGridViewLawyers.Columns[0].Visibility = Visibility.Hidden;
                         dataGridViewLawyers.Columns[1].Width = DataGridLength.Auto;
-                    }
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
                 }
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -53,18 +50,18 @@ namespace AbstractFirmViewWPF
         private void buttonAdd_Click(object sender, EventArgs e)
         {
             var form = new FormLawyer();
-            if (form.ShowDialog() == true)
-                LoadData();
+            form.ShowDialog();
         }
 
         private void buttonUpd_Click(object sender, EventArgs e)
         {
             if (dataGridViewLawyers.SelectedItem != null)
             {
-                var form = new FormLawyer();
-                form.Id = ((LawyerViewModel)dataGridViewLawyers.SelectedItem).Id;
-                if (form.ShowDialog() == true)
-                    LoadData();
+                var form = new FormLawyer
+                {
+                    Id = ((LawyerViewModel)dataGridViewLawyers.SelectedItem).Id
+                };
+                form.ShowDialog();
             }
         }
 
@@ -76,19 +73,20 @@ namespace AbstractFirmViewWPF
                     MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 {
                     int id = ((LawyerViewModel)dataGridViewLawyers.SelectedItem).Id;
-                    try
+                    Task task = Task.Run(() => APIKlient.PostRequestData("api/Lawyer/DelElement", new KlientBindingModel { Id = id }));
+
+                    task.ContinueWith((prevTask) => MessageBox.Show("Запись удалена. Обновите список", "Успех", MessageBoxButton.OK, MessageBoxImage.Information),
+                    TaskContinuationOptions.OnlyOnRanToCompletion);
+
+                    task.ContinueWith((prevTask) =>
                     {
-                        var response = APIKlient.PostRequest("api/Lawyer/DelElement", new KlientBindingModel { Id = id });
-                        if (!response.Result.IsSuccessStatusCode)
+                        var ex = (Exception)prevTask.Exception;
+                        while (ex.InnerException != null)
                         {
-                            throw new Exception(APIKlient.GetError(response));
+                            ex = ex.InnerException;
                         }
-                    }
-                    catch (Exception ex)
-                    {
                         MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                    LoadData();
+                    }, TaskContinuationOptions.OnlyOnFaulted);
                 }
             }
         }

@@ -3,6 +3,7 @@ using AbstractFirmService.ViewModel;
 using AbstractFirmView;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace AbstractFirmViewWPF
@@ -31,11 +32,8 @@ namespace AbstractFirmViewWPF
                     MessageBox.Show("Не указана заявка", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     Close();
                 }
-                var response = APIKlient.GetRequest("api/Lawyer/GetList");
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    List<LawyerViewModel> list = APIKlient.GetElement<List<LawyerViewModel>>(response);
-                    if (list != null)
+                    List<LawyerViewModel> list = Task.Run(() => APIKlient.GetRequestData<List<LawyerViewModel>>("api/Lawyer/GetList")).Result;
+                if (list != null)
                     {
                         comboBoxLawyer.DisplayMemberPath = "LawyerFIO";
                         comboBoxLawyer.SelectedValuePath = "Id";
@@ -43,14 +41,13 @@ namespace AbstractFirmViewWPF
                         comboBoxLawyer.SelectedItem = null;
 
                     }
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -64,31 +61,39 @@ namespace AbstractFirmViewWPF
             }
             try
             {
-                var response = APIKlient.PostRequest("api/Main/TakeRequestInWork", new RequestBindingModel
+                int implementerId = Convert.ToInt32(comboBoxLawyer.SelectedValue);
+                Task task = Task.Run(() => APIKlient.PostRequestData("api/Main/TakeRequestInWork", new RequestBindingModel
                 {
                     Id = id.Value,
-                    LawyerId = ((LawyerViewModel)comboBoxLawyer.SelectedItem).Id,
-                });
-                if (response.Result.IsSuccessStatusCode)
+                    LawyerId = implementerId
+                }));
+
+                task.ContinueWith((prevTask) => MessageBox.Show("Заказ передан в работу. Обновите список", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information),
+                    TaskContinuationOptions.OnlyOnRanToCompletion);
+                task.ContinueWith((prevTask) =>
                 {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
-                    DialogResult = true;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
+                    var ex = (Exception)prevTask.Exception;
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
+                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }, TaskContinuationOptions.OnlyOnFaulted);
+
+                Close();
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void buttonCancel_Click(object sender, EventArgs e)
         {
-            DialogResult = false;
             Close();
         }
     }

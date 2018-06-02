@@ -1,8 +1,8 @@
-﻿using AbstractFirmService.Interfaces;
-using AbstractFirmService.ViewModel;
+﻿using AbstractFirmService.ViewModel;
 using AbstractFirmView;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace AbstractFirmViewWPF
@@ -25,21 +25,17 @@ namespace AbstractFirmViewWPF
         {
             try
             {
-                var response = APIKlient.GetRequest("api/Blank/GetList");
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    comboBoxBlank.DisplayMemberPath = "BlankName";
-                    comboBoxBlank.SelectedValuePath = "Id";
-                    comboBoxBlank.ItemsSource = APIKlient.GetElement<List<BlankViewModel>>(response);
-                    comboBoxBlank.SelectedItem = null;
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
+                comboBoxBlank.DisplayMemberPath = "BlankName";
+                comboBoxBlank.SelectedValuePath = "Id";
+                comboBoxBlank.ItemsSource = Task.Run(() => APIKlient.GetRequestData<List<BlankViewModel>>("api/Blank/GetList")).Result;
+                comboBoxBlank.SelectedItem = null;
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 

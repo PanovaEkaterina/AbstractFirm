@@ -2,6 +2,7 @@
 using AbstractFirmService.ViewModel;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace AbstractFirmView
@@ -22,24 +23,20 @@ namespace AbstractFirmView
         {
             try
             {
-                var response = APIKlient.GetRequest("api/Lawyer/GetList");
-                if (response.Result.IsSuccessStatusCode)
+                List<LawyerViewModel> list = Task.Run(() => APIKlient.GetRequestData<List<LawyerViewModel>>("api/Lawyer/GetList")).Result;
+                if (list != null)
                 {
-                    List<LawyerViewModel> list = APIKlient.GetElement<List<LawyerViewModel>>(response);
-                    if (list != null)
-                    {
-                        dataGridView.DataSource = list;
-                        dataGridView.Columns[0].Visible = false;
-                        dataGridView.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                    }
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
+                    dataGridView.DataSource = list;
+                    dataGridView.Columns[0].Visible = false;
+                    dataGridView.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 }
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -47,22 +44,18 @@ namespace AbstractFirmView
         private void buttonAdd_Click(object sender, EventArgs e)
         {
             var form = new FormLawyer();
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                LoadData();
-            }
+            form.ShowDialog();
         }
 
         private void buttonUpd_Click(object sender, EventArgs e)
         {
             if (dataGridView.SelectedRows.Count == 1)
             {
-                var form = new FormLawyer();
-                form.Id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value);
-                if (form.ShowDialog() == DialogResult.OK)
+                var form = new FormLawyer
                 {
-                    LoadData();
-                }
+                    Id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value)
+                };
+                form.ShowDialog();
             }
         }
 
@@ -73,19 +66,21 @@ namespace AbstractFirmView
                 if (MessageBox.Show("Удалить запись", "Вопрос", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
                     int id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value);
-                    try
+
+                    Task task = Task.Run(() => APIKlient.PostRequestData("api/Lawyer/DelElement", new KlientBindingModel { Id = id }));
+
+                    task.ContinueWith((prevTask) => MessageBox.Show("Запись удалена. Обновите список", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information),
+                    TaskContinuationOptions.OnlyOnRanToCompletion);
+
+                    task.ContinueWith((prevTask) =>
                     {
-                        var response = APIKlient.PostRequest("api/Lawyer/DelElement", new KlientBindingModel { Id = id });
-                        if (!response.Result.IsSuccessStatusCode)
+                        var ex = (Exception)prevTask.Exception;
+                        while (ex.InnerException != null)
                         {
-                            throw new Exception(APIKlient.GetError(response));
+                            ex = ex.InnerException;
                         }
-                    }
-                    catch (Exception ex)
-                    {
                         MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                    LoadData();
+                    }, TaskContinuationOptions.OnlyOnFaulted);
                 }
             }
         }

@@ -3,6 +3,7 @@ using AbstractFirmService.ViewModel;
 using AbstractFirmView;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -28,24 +29,20 @@ namespace AbstractFirmViewWPF
         {
             try
             {
-                var response = APIKlient.GetRequest("api/Archive/GetList");
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    List<ArchiveViewModel> list = APIKlient.GetElement<List<ArchiveViewModel>>(response);
-                    if (list != null)
+                List<ArchiveViewModel> list = Task.Run(() => APIKlient.GetRequestData<List<ArchiveViewModel>>("api/Archive/GetList")).Result;
+                if (list != null)
                     {
                         dataGridViewArchives.ItemsSource = list;
                         dataGridViewArchives.Columns[0].Visibility = Visibility.Hidden;
                         dataGridViewArchives.Columns[1].Width = DataGridLength.Auto;
                     }
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -53,22 +50,19 @@ namespace AbstractFirmViewWPF
         private void buttonAdd_Click(object sender, EventArgs e)
         {
             var form = new FormArchive();
-            if (form.ShowDialog() == true)
-            {
-                LoadData();
-            }
+            form.ShowDialog();
         }
 
         private void buttonUpd_Click(object sender, EventArgs e)
         {
             if (dataGridViewArchives.SelectedItem != null)
             {
-                var form = new FormArchive();
-                form.Id = ((ArchiveViewModel)dataGridViewArchives.SelectedItem).Id;
-                if (form.ShowDialog() == true)
+                var form = new FormArchive
                 {
-                    LoadData();
-                }
+                    Id = ((ArchiveViewModel)dataGridViewArchives.SelectedItem).Id
+                };
+               
+                form.ShowDialog();
             }
         }
 
@@ -80,19 +74,20 @@ namespace AbstractFirmViewWPF
                     MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 {
                     int id = ((ArchiveViewModel)dataGridViewArchives.SelectedItem).Id;
-                    try
+                    Task task = Task.Run(() => APIKlient.PostRequestData("api/Archive/DelElement", new KlientBindingModel { Id = id }));
+
+                    task.ContinueWith((prevTask) => MessageBox.Show("Запись удалена. Обновите список", "Успех", MessageBoxButton.OK, MessageBoxImage.Information),
+                    TaskContinuationOptions.OnlyOnRanToCompletion);
+
+                    task.ContinueWith((prevTask) =>
                     {
-                        var response = APIKlient.PostRequest("api/Archive/DelElement", new KlientBindingModel { Id = id });
-                        if (!response.Result.IsSuccessStatusCode)
+                        var ex = (Exception)prevTask.Exception;
+                        while (ex.InnerException != null)
                         {
-                            throw new Exception(APIKlient.GetError(response));
+                            ex = ex.InnerException;
                         }
-                    }
-                    catch (Exception ex)
-                    {
                         MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                    LoadData();
+                    }, TaskContinuationOptions.OnlyOnFaulted);
                 }
             }
         }

@@ -3,6 +3,7 @@ using AbstractFirmService.ViewModel;
 using AbstractFirmView;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace AbstractFirmViewWPF
@@ -22,37 +23,29 @@ namespace AbstractFirmViewWPF
         {
             try
             {
-                var responseC = APIKlient.GetRequest("api/Blank/GetList");
-                if (responseC.Result.IsSuccessStatusCode)
-                {
-                    List<BlankViewModel> list = APIKlient.GetElement<List<BlankViewModel>>(responseC);
-                    if (list != null)
+                List<BlankViewModel> list = Task.Run(() => APIKlient.GetRequestData<List<BlankViewModel>>("api/Blank/GetList")).Result;
+                if (list != null)
                     {
                         comboBoxBlank.DisplayMemberPath = "BlankName";
                         comboBoxBlank.SelectedValuePath = "Id";
                         comboBoxBlank.ItemsSource = list;
                         comboBoxBlank.SelectedItem = null;
                     }
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(responseC));
-                }
-                var responseS = APIKlient.GetRequest("api/Archive/GetList");
-                if (responseS.Result.IsSuccessStatusCode)
-                {
-                    List<ArchiveViewModel> list = APIKlient.GetElement<List<ArchiveViewModel>>(responseS);
-                    if (list != null)
+                    List<ArchiveViewModel> listA = Task.Run(() => APIKlient.GetRequestData<List<ArchiveViewModel>>("api/Archive/GetList")).Result;
+                if (listA != null)
                     {
                         comboBoxArchive.DisplayMemberPath = "ArchiveName";
                         comboBoxArchive.SelectedValuePath = "Id";
                         comboBoxArchive.ItemsSource = list;
                         comboBoxArchive.SelectedItem = null;
                     }
-                }
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -76,32 +69,42 @@ namespace AbstractFirmViewWPF
             }
             try
             {
-                var response = APIKlient.PostRequest("api/Main/PutBlankOnArchive", new ArchiveBlankBindingModel
+                int componentId = Convert.ToInt32(comboBoxBlank.SelectedValue);
+                int stockId = Convert.ToInt32(comboBoxArchive.SelectedValue);
+                int count = Convert.ToInt32(textBoxCount.Text);
+                Task task = Task.Run(() => APIKlient.PostRequestData("api/Main/PutBlankOnArchive", new ArchiveBlankBindingModel
                 {
-                    BlankId = Convert.ToInt32(comboBoxBlank.SelectedValue),
-                    ArchiveId = Convert.ToInt32(comboBoxArchive.SelectedValue),
-                    Count = Convert.ToInt32(textBoxCount.Text)
-                });
-                if (response.Result.IsSuccessStatusCode)
+                    BlankId = componentId,
+                    ArchiveId = stockId,
+                    Count = count
+                }));
+
+                task.ContinueWith((prevTask) => MessageBox.Show("Архив пополнен", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information),
+                    TaskContinuationOptions.OnlyOnRanToCompletion);
+                task.ContinueWith((prevTask) =>
                 {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
-                    DialogResult = true;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
+                    var ex = (Exception)prevTask.Exception;
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
+                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }, TaskContinuationOptions.OnlyOnFaulted);
+
+                Close();
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void buttonCancel_Click(object sender, EventArgs e)
         {
-            DialogResult = false;
             Close();
         }
 

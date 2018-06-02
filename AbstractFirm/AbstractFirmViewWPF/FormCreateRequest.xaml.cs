@@ -1,9 +1,9 @@
 ﻿using AbstractFirmService.BindingModel;
-using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
 using AbstractFirmView;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -26,41 +26,30 @@ namespace AbstractFirmViewWPF
         {
             try
             {
-                var responseC = APIKlient.GetRequest("api/Klient/GetList");
-                if (responseC.Result.IsSuccessStatusCode)
+                List<KlientViewModel> list = Task.Run(() => APIKlient.GetRequestData<List<KlientViewModel>>("api/Klient/GetList")).Result;
+                if (list != null)
                 {
-                    List<KlientViewModel> list = APIKlient.GetElement<List<KlientViewModel>>(responseC);
-                    if (list != null)
-                    {
                         comboBoxClient.DisplayMemberPath = "KlientFIO";
                         comboBoxClient.SelectedValuePath = "Id";
                         comboBoxClient.ItemsSource = list;
                         comboBoxClient.SelectedItem = null;
-                    }
                 }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(responseC));
-                }
-                var responseP = APIKlient.GetRequest("api/Package/GetList");
-                if (responseP.Result.IsSuccessStatusCode)
-                {
-                    List<PackageViewModel> list = APIKlient.GetElement<List<PackageViewModel>>(responseP);
-                    if (list != null)
-                    {
+
+                List<PackageViewModel> listP = Task.Run(() => APIKlient.GetRequestData<List<PackageViewModel>>("api/Package/GetList")).Result;
+                if (listP != null)
+                { 
                         comboBoxPackage.DisplayMemberPath = "PackageName";
                         comboBoxPackage.SelectedValuePath = "Id";
                         comboBoxPackage.ItemsSource = list;
                         comboBoxPackage.SelectedItem = null;
-                    }
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(responseP));
                 }
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -72,20 +61,16 @@ namespace AbstractFirmViewWPF
                 try
                 {
                     int id = ((PackageViewModel)comboBoxPackage.SelectedItem).Id;
-                    var responseP = APIKlient.GetRequest("api/Product/Get/" + id);
-                    if (responseP.Result.IsSuccessStatusCode)
-                    {
-                        PackageViewModel product = APIKlient.GetElement<PackageViewModel>(responseP);
-                        int count = Convert.ToInt32(textBoxCount.Text);
-                        textBoxSum.Text = (count * (int)product.Price).ToString();
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(responseP));
-                    }
+                    PackageViewModel product = Task.Run(() => APIKlient.GetRequestData<PackageViewModel>("api/Package/Get/" + id)).Result;
+                    int count = Convert.ToInt32(textBoxCount.Text);
+                    textBoxSum.Text = (count * (int)product.Price).ToString();
                 }
                 catch (Exception ex)
                 {
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
@@ -118,35 +103,35 @@ namespace AbstractFirmViewWPF
                 MessageBox.Show("Выберите мебель", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            try
+            int clientId = Convert.ToInt32(comboBoxClient.SelectedValue);
+            int productId = Convert.ToInt32(comboBoxPackage.SelectedValue);
+            int count = Convert.ToInt32(textBoxCount.Text);
+            int sum = Convert.ToInt32(textBoxSum.Text);
+            Task task = Task.Run(() => APIKlient.PostRequestData("api/Main/CreateRequest", new RequestBindingModel
             {
-                var response = APIKlient.PostRequest("api/Main/CreateRequest", new RequestBindingModel
-                {
-                    KlientId = Convert.ToInt32(comboBoxClient.SelectedValue),
-                    PackageId = Convert.ToInt32(comboBoxPackage.SelectedValue),
-                    Count = Convert.ToInt32(textBoxCount.Text),
-                    Sum = Convert.ToInt32(textBoxSum.Text)
-                });
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
-                    DialogResult = true;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
-            }
-            catch (Exception ex)
+                KlientId = clientId,
+                PackageId = productId,
+                Count = count,
+                Sum = sum
+            }));
+
+            task.ContinueWith((prevTask) => MessageBox.Show("Сохранение прошло успешно. Обновите список", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+            task.ContinueWith((prevTask) =>
             {
+                var ex = (Exception)prevTask.Exception;
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            }, TaskContinuationOptions.OnlyOnFaulted);
+
+            Close();
         }
 
         private void buttonCancel_Click(object sender, EventArgs e)
         {
-            DialogResult = false;
             Close();
         }
     }

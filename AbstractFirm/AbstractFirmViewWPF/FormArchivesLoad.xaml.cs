@@ -4,6 +4,7 @@ using AbstractFirmView;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace AbstractFirmViewWPF
@@ -22,12 +23,9 @@ namespace AbstractFirmViewWPF
         private void FormArchivesLoad_Load(object sender, EventArgs e)
         {
             try
-            {
-                var response = APIKlient.GetRequest("api/Report/GetArchivesLoad");
-                if (response.Result.IsSuccessStatusCode)
-                {                  
+            {                 
                     dataGridView.Items.Clear();
-                    foreach (var elem in APIKlient.GetElement<List<ArchivesLoadViewModel>>(response))
+                    foreach (var elem in Task.Run(() => APIKlient.GetRequestData<List<ArchivesLoadViewModel>>("api/Report/GetArchivesLoad")).Result)
                     {
                         dataGridView.Items.Add(new object[] { elem.ArchiveName, "", "" });
                         foreach (var listElem in elem.Blanks)
@@ -37,14 +35,13 @@ namespace AbstractFirmViewWPF
                         dataGridView.Items.Add(new object[] { "Итого", "", elem.TotalCount });
                         dataGridView.Items.Add(new object[] { });
                     }
-                }
-                else
-                {
-                    throw new Exception(APIKlient.GetError(response));
-                }
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -57,27 +54,24 @@ namespace AbstractFirmViewWPF
             };
             if (sfd.ShowDialog() == true)
             {
-                try
+                string fileName = sfd.FileName;
+                Task task = Task.Run(() => APIKlient.PostRequestData("api/Report/SaveArchivesLoad", new ReportBindingModel
                 {
-                    var response = APIKlient.PostRequest("api/Report/SaveArchivesLoad", new ReportBindingModel
-                    {
-                        FileName = sfd.FileName
-                    });
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
-                    else
-                    {
-                        throw new Exception(APIKlient.GetError(response));
-                    }
-                }
-                catch (Exception ex)
+                    FileName = fileName
+                }));
+
+                task.ContinueWith((prevTask) => MessageBox.Show("Выполнено", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information),
+                    TaskContinuationOptions.OnlyOnRanToCompletion);
+                task.ContinueWith((prevTask) =>
                 {
+                    var ex = (Exception)prevTask.Exception;
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                }, TaskContinuationOptions.OnlyOnFaulted);
             }
         }
-
     }
 }

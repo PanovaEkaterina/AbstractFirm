@@ -1,11 +1,10 @@
-﻿using AbstractFirmService.Interfaces;
+﻿using AbstractFirmService.BindingModel;
 using AbstractFirmService.ViewModel;
+using AbstractFirmView;
 using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractFirmViewWPF
 {
@@ -14,16 +13,10 @@ namespace AbstractFirmViewWPF
     /// </summary>
     public partial class FormArchives : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IArchiveService service;
-
-        public FormArchives(IArchiveService service)
+        public FormArchives()
         {
             InitializeComponent();
             Loaded += FormArchives_Load;
-            this.service = service;
         }
 
         private void FormArchives_Load(object sender, EventArgs e)
@@ -35,12 +28,20 @@ namespace AbstractFirmViewWPF
         {
             try
             {
-                List<ArchiveViewModel> list = service.GetList();
-                if (list != null)
+                var response = APIKlient.GetRequest("api/Archive/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    dataGridViewArchives.ItemsSource = list;
-                    dataGridViewArchives.Columns[0].Visibility = Visibility.Hidden;
-                    dataGridViewArchives.Columns[1].Width = DataGridLength.Auto;
+                    List<ArchiveViewModel> list = APIKlient.GetElement<List<ArchiveViewModel>>(response);
+                    if (list != null)
+                    {
+                        dataGridViewArchives.ItemsSource = list;
+                        dataGridViewArchives.Columns[0].Visibility = Visibility.Hidden;
+                        dataGridViewArchives.Columns[1].Width = DataGridLength.Auto;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIKlient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -51,7 +52,7 @@ namespace AbstractFirmViewWPF
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormArchive>();
+            var form = new FormArchive();
             if (form.ShowDialog() == true)
             {
                 LoadData();
@@ -62,7 +63,7 @@ namespace AbstractFirmViewWPF
         {
             if (dataGridViewArchives.SelectedItem != null)
             {
-                var form = Container.Resolve<FormArchive>();
+                var form = new FormArchive();
                 form.Id = ((ArchiveViewModel)dataGridViewArchives.SelectedItem).Id;
                 if (form.ShowDialog() == true)
                 {
@@ -81,7 +82,11 @@ namespace AbstractFirmViewWPF
                     int id = ((ArchiveViewModel)dataGridViewArchives.SelectedItem).Id;
                     try
                     {
-                        service.DelElement(id);
+                        var response = APIKlient.PostRequest("api/Archive/DelElement", new KlientBindingModel { Id = id });
+                        if (!response.Result.IsSuccessStatusCode)
+                        {
+                            throw new Exception(APIKlient.GetError(response));
+                        }
                     }
                     catch (Exception ex)
                     {

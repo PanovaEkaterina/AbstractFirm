@@ -1,11 +1,10 @@
-﻿using AbstractFirmService.Interfaces;
+﻿using AbstractFirmService.BindingModel;
 using AbstractFirmService.ViewModel;
+using AbstractFirmView;
 using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractFirmViewWPF
 {
@@ -14,16 +13,10 @@ namespace AbstractFirmViewWPF
     /// </summary>
     public partial class FormLawyers : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly ILawyerService service;
-
-        public FormLawyers(ILawyerService service)
+        public FormLawyers()
         {
             InitializeComponent();
             Loaded += FormLawyers_Load;
-            this.service = service;
         }
 
         private void FormLawyers_Load(object sender, EventArgs e)
@@ -35,12 +28,20 @@ namespace AbstractFirmViewWPF
         {
             try
             {
-                List<LawyerViewModel> list = service.GetList();
-                if (list != null)
+                var response = APIKlient.GetRequest("api/Lawyer/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    dataGridViewLawyers.ItemsSource = list;
-                    dataGridViewLawyers.Columns[0].Visibility = Visibility.Hidden;
-                    dataGridViewLawyers.Columns[1].Width = DataGridLength.Auto;
+                    List<LawyerViewModel> list = APIKlient.GetElement<List<LawyerViewModel>>(response);
+                    if (list != null)
+                    {
+                        dataGridViewLawyers.ItemsSource = list;
+                        dataGridViewLawyers.Columns[0].Visibility = Visibility.Hidden;
+                        dataGridViewLawyers.Columns[1].Width = DataGridLength.Auto;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIKlient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -51,7 +52,7 @@ namespace AbstractFirmViewWPF
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormLawyer>();
+            var form = new FormLawyer();
             if (form.ShowDialog() == true)
                 LoadData();
         }
@@ -60,7 +61,7 @@ namespace AbstractFirmViewWPF
         {
             if (dataGridViewLawyers.SelectedItem != null)
             {
-                var form = Container.Resolve<FormLawyer>();
+                var form = new FormLawyer();
                 form.Id = ((LawyerViewModel)dataGridViewLawyers.SelectedItem).Id;
                 if (form.ShowDialog() == true)
                     LoadData();
@@ -77,7 +78,11 @@ namespace AbstractFirmViewWPF
                     int id = ((LawyerViewModel)dataGridViewLawyers.SelectedItem).Id;
                     try
                     {
-                        service.DelElement(id);
+                        var response = APIKlient.PostRequest("api/Lawyer/DelElement", new KlientBindingModel { Id = id });
+                        if (!response.Result.IsSuccessStatusCode)
+                        {
+                            throw new Exception(APIKlient.GetError(response));
+                        }
                     }
                     catch (Exception ex)
                     {

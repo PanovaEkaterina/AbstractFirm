@@ -1,10 +1,9 @@
 ﻿using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
+using AbstractFirmView;
 using System;
 using System.Collections.Generic;
 using System.Windows;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractFirmViewWPF
 {
@@ -13,33 +12,30 @@ namespace AbstractFirmViewWPF
     /// </summary>
     public partial class FormPackageBlank : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public PackageBlankViewModel Model { set { model = value; } get { return model; } }
-
-        private readonly IBlankService service;
 
         private PackageBlankViewModel model;
 
-        public FormPackageBlank(IBlankService service)
+        public FormPackageBlank()
         {
             InitializeComponent();
-            Loaded += FormPackageBlank_Load;
-            this.service = service;
         }
 
         private void FormPackageBlank_Load(object sender, EventArgs e)
         {
-            List<BlankViewModel> list = service.GetList();
             try
             {
-                if (list != null)
+                var response = APIKlient.GetRequest("api/Blank/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
                     comboBoxBlank.DisplayMemberPath = "BlankName";
                     comboBoxBlank.SelectedValuePath = "Id";
-                    comboBoxBlank.ItemsSource = list;
+                    comboBoxBlank.ItemsSource = APIKlient.GetElement<List<BlankViewModel>>(response);
                     comboBoxBlank.SelectedItem = null;
+                }
+                else
+                {
+                    throw new Exception(APIKlient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -50,13 +46,7 @@ namespace AbstractFirmViewWPF
             if (model != null)
             {
                 comboBoxBlank.IsEnabled = false;
-                foreach (BlankViewModel item in list)
-                {
-                    if (item.BlankName == model.BlankName)
-                    {
-                        comboBoxBlank.SelectedItem = item;
-                    }
-                }
+                comboBoxBlank.SelectedItem = model.BlankId;
                 textBoxCount.Text = model.Count.ToString();
             }
         }

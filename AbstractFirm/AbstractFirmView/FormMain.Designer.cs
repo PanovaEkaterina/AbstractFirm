@@ -155,7 +155,7 @@
             this.buttonPayOrder.TabIndex = 4;
             this.buttonPayOrder.Text = "Заказ оплачен";
             this.buttonPayOrder.UseVisualStyleBackColor = true;
-            this.buttonPayOrder.Click += new System.EventHandler(this.buttonPayOrder_Click);
+            this.buttonPayOrder.Click += new System.EventHandler(this.buttonPayRequest_Click);
             // 
             // buttonOrderReady
             // 
@@ -165,7 +165,7 @@
             this.buttonOrderReady.TabIndex = 3;
             this.buttonOrderReady.Text = "Заказ готов";
             this.buttonOrderReady.UseVisualStyleBackColor = true;
-            this.buttonOrderReady.Click += new System.EventHandler(this.buttonOrderReady_Click);
+            this.buttonOrderReady.Click += new System.EventHandler(this.buttonRequestReady_Click);
             // 
             // buttonTakeOrderInWork
             // 
@@ -175,7 +175,7 @@
             this.buttonTakeOrderInWork.TabIndex = 2;
             this.buttonTakeOrderInWork.Text = "Отдать на выполнение";
             this.buttonTakeOrderInWork.UseVisualStyleBackColor = true;
-            this.buttonTakeOrderInWork.Click += new System.EventHandler(this.buttonTakeOrderInWork_Click);
+            this.buttonTakeOrderInWork.Click += new System.EventHandler(this.buttonTakeRequestInWork_Click);
             // 
             // buttonCreateOrder
             // 
@@ -185,7 +185,7 @@
             this.buttonCreateOrder.TabIndex = 1;
             this.buttonCreateOrder.Text = "Создать заказ";
             this.buttonCreateOrder.UseVisualStyleBackColor = true;
-            this.buttonCreateOrder.Click += new System.EventHandler(this.buttonCreateOrder_Click);
+            this.buttonCreateOrder.Click += new System.EventHandler(this.buttonCreateRequest_Click);
             // 
             // dataGridView
             // 

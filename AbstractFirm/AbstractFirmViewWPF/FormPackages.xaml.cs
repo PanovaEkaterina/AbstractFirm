@@ -1,11 +1,10 @@
-﻿using AbstractFirmService.Interfaces;
+﻿using AbstractFirmService.BindingModel;
 using AbstractFirmService.ViewModel;
+using AbstractFirmView;
 using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractFirmViewWPF
 {
@@ -14,16 +13,10 @@ namespace AbstractFirmViewWPF
     /// </summary>
     public partial class FormPackages : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IPackageService service;
-
-        public FormPackages(IPackageService service)
+        public FormPackages()
         {
             InitializeComponent();
             Loaded += FormPackages_Load;
-            this.service = service;
         }
 
         private void FormPackages_Load(object sender, EventArgs e)
@@ -35,13 +28,21 @@ namespace AbstractFirmViewWPF
         {
             try
             {
-                List<PackageViewModel> list = service.GetList();
-                if (list != null)
+                var response = APIKlient.GetRequest("api/Package/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    dataGridViewPackages.ItemsSource = list;
-                    dataGridViewPackages.Columns[0].Visibility = Visibility.Hidden;
-                    dataGridViewPackages.Columns[1].Width = DataGridLength.Auto;
-                    dataGridViewPackages.Columns[3].Visibility = Visibility.Hidden;
+                    List<PackageViewModel> list = APIKlient.GetElement<List<PackageViewModel>>(response);
+                    if (list != null)
+                    {
+                        dataGridViewPackages.ItemsSource = list;
+                        dataGridViewPackages.Columns[0].Visibility = Visibility.Hidden;
+                        dataGridViewPackages.Columns[1].Width = DataGridLength.Auto;
+                        dataGridViewPackages.Columns[3].Visibility = Visibility.Hidden;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIKlient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -52,7 +53,7 @@ namespace AbstractFirmViewWPF
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormPackage>();
+            var form = new FormPackage();
             if (form.ShowDialog() == true)
                 LoadData();
         }
@@ -61,7 +62,7 @@ namespace AbstractFirmViewWPF
         {
             if (dataGridViewPackages.SelectedItem != null)
             {
-                var form = Container.Resolve<FormPackage>();
+                var form = new FormPackage();
                 form.Id = ((PackageViewModel)dataGridViewPackages.SelectedItem).Id;
                 if (form.ShowDialog() == true)
                     LoadData();
@@ -79,7 +80,11 @@ namespace AbstractFirmViewWPF
                     int id = ((PackageViewModel)dataGridViewPackages.SelectedItem).Id;
                     try
                     {
-                        service.DelElement(id);
+                        var response = APIKlient.PostRequest("api/Package/DelElement", new KlientBindingModel { Id = id });
+                        if (!response.Result.IsSuccessStatusCode)
+                        {
+                            throw new Exception(APIKlient.GetError(response));
+                        }
                     }
                     catch (Exception ex)
                     {

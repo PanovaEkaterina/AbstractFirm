@@ -1,25 +1,16 @@
-﻿using AbstractFirmService.Interfaces;
+﻿using AbstractFirmService.BindingModel;
 using AbstractFirmService.ViewModel;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractFirmView
 {
     public partial class FormLawyers : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly ILawyerService service;
-
-        public FormLawyers(ILawyerService service)
+        public FormLawyers()
         {
             InitializeComponent();
-            this.service = service;
         }
 
         private void FormLawyers_Load(object sender, EventArgs e)
@@ -31,12 +22,20 @@ namespace AbstractFirmView
         {
             try
             {
-                List<LawyerViewModel> list = service.GetList();
-                if (list != null)
+                var response = APIKlient.GetRequest("api/Lawyer/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    dataGridView.DataSource = list;
-                    dataGridView.Columns[0].Visible = false;
-                    dataGridView.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    List<LawyerViewModel> list = APIKlient.GetElement<List<LawyerViewModel>>(response);
+                    if (list != null)
+                    {
+                        dataGridView.DataSource = list;
+                        dataGridView.Columns[0].Visible = false;
+                        dataGridView.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIKlient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -47,7 +46,7 @@ namespace AbstractFirmView
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormLawyer>();
+            var form = new FormLawyer();
             if (form.ShowDialog() == DialogResult.OK)
             {
                 LoadData();
@@ -58,7 +57,7 @@ namespace AbstractFirmView
         {
             if (dataGridView.SelectedRows.Count == 1)
             {
-                var form = Container.Resolve<FormLawyer>();
+                var form = new FormLawyer();
                 form.Id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value);
                 if (form.ShowDialog() == DialogResult.OK)
                 {
@@ -76,7 +75,11 @@ namespace AbstractFirmView
                     int id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value);
                     try
                     {
-                        service.DelElement(id);
+                        var response = APIKlient.PostRequest("api/Lawyer/DelElement", new KlientBindingModel { Id = id });
+                        if (!response.Result.IsSuccessStatusCode)
+                        {
+                            throw new Exception(APIKlient.GetError(response));
+                        }
                     }
                     catch (Exception ex)
                     {

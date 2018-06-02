@@ -1,11 +1,11 @@
-﻿using AbstractFirmService.Interfaces;
+﻿
+using AbstractFirmService.BindingModel;
 using AbstractFirmService.ViewModel;
+using AbstractFirmView;
 using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractFirmViewWPF
 {
@@ -14,16 +14,10 @@ namespace AbstractFirmViewWPF
     /// </summary>
     public partial class FormKlients : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IKlientService service;
-
-        public FormKlients(IKlientService service)
+        public FormKlients()
         {
             InitializeComponent();
             Loaded += FormKlients_Load;
-            this.service = service;
         }
 
         private void FormKlients_Load(object sender, EventArgs e)
@@ -35,12 +29,20 @@ namespace AbstractFirmViewWPF
         {
             try
             {
-                List<KlientViewModel> list = service.GetList();
-                if (list != null)
+                var response = APIKlient.GetRequest("api/Klient/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    dataGridViewKlients.ItemsSource = list;
-                    dataGridViewKlients.Columns[0].Visibility = Visibility.Hidden;
-                    dataGridViewKlients.Columns[1].Width = DataGridLength.Auto;
+                    List<KlientViewModel> list = APIKlient.GetElement<List<KlientViewModel>>(response);
+                    if (list != null)
+                    {
+                        dataGridViewKlients.ItemsSource = list;
+                        dataGridViewKlients.Columns[0].Visibility = Visibility.Hidden;
+                        dataGridViewKlients.Columns[1].Width = DataGridLength.Auto;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIKlient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -51,7 +53,7 @@ namespace AbstractFirmViewWPF
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormKlient>();
+            var form = new FormKlient();
             if (form.ShowDialog() == true)
             {
                 LoadData();
@@ -62,7 +64,7 @@ namespace AbstractFirmViewWPF
         {
             if (dataGridViewKlients.SelectedItem != null)
             {
-                var form = Container.Resolve<FormKlient>();
+                var form = new FormKlient();
                 form.Id = ((KlientViewModel)dataGridViewKlients.SelectedItem).Id;
                 if (form.ShowDialog() == true)
                 {
@@ -81,7 +83,11 @@ namespace AbstractFirmViewWPF
                     int id = ((KlientViewModel)dataGridViewKlients.SelectedItem).Id;
                     try
                     {
-                        service.DelElement(id);
+                        var response = APIKlient.PostRequest("api/Klient/DelElement", new KlientBindingModel { Id = id });
+                        if (!response.Result.IsSuccessStatusCode)
+                        {
+                            throw new Exception(APIKlient.GetError(response));
+                        }
                     }
                     catch (Exception ex)
                     {

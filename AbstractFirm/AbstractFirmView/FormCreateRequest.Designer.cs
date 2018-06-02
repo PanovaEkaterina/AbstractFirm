@@ -149,7 +149,7 @@
             this.Name = "FormCreateRequest";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Заказ";
-            this.Load += new System.EventHandler(this.FormCreateOrder_Load);
+            this.Load += new System.EventHandler(this.FormCreateRequest_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 

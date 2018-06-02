@@ -1,10 +1,10 @@
 ﻿using AbstractFirmService.BindingModel;
-using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
+using AbstractFirmView;
 using System;
+using System.Net.Http;
+using System.Threading.Tasks;
 using System.Windows;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractFirmViewWPF
 {
@@ -13,20 +13,14 @@ namespace AbstractFirmViewWPF
     /// </summary>
     public partial class FormLawyer : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public int Id { set { id = value; } }
-
-        private readonly ILawyerService service;
 
         private int? id;
 
-        public FormLawyer(ILawyerService service)
+        public FormLawyer()
         {
             InitializeComponent();
             Loaded += FormLawyer_Load;
-            this.service = service;
         }
 
         private void FormLawyer_Load(object sender, EventArgs e)
@@ -35,9 +29,16 @@ namespace AbstractFirmViewWPF
             {
                 try
                 {
-                    LawyerViewModel view = service.GetElement(id.Value);
-                    if (view != null)
-                        textBoxFullName.Text = view.LawyerFIO;
+                    var response = APIKlient.GetRequest("api/Lawyer/Get/" + id.Value);
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        var Lawyer = APIKlient.GetElement<LawyerViewModel>(response);
+                        textBoxFullName.Text = Lawyer.LawyerFIO;
+                    }
+                    else
+                    {
+                        throw new Exception(APIKlient.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -55,9 +56,10 @@ namespace AbstractFirmViewWPF
             }
             try
             {
+                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    service.UpdElement(new LawyerBindingModel
+                    response = APIKlient.PostRequest("api/Lawyer/UpdElement", new LawyerBindingModel
                     {
                         Id = id.Value,
                         LawyerFIO = textBoxFullName.Text
@@ -65,14 +67,21 @@ namespace AbstractFirmViewWPF
                 }
                 else
                 {
-                    service.AddElement(new LawyerBindingModel
+                    response = APIKlient.PostRequest("api/Lawyer/AddElement", new LawyerBindingModel
                     {
                         LawyerFIO = textBoxFullName.Text
                     });
                 }
-                MessageBox.Show("Сохранение прошло успешно", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APIKlient.GetError(response));
+                }
             }
             catch (Exception ex)
             {

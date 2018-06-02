@@ -1,11 +1,9 @@
 ﻿using AbstractFirmService.BindingModel;
-using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
+using AbstractFirmView;
 using System;
 using System.Collections.Generic;
 using System.Windows;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractFirmViewWPF
 {
@@ -14,23 +12,14 @@ namespace AbstractFirmViewWPF
     /// </summary>
     public partial class FormTakeRequestInWork : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public int Id { set { id = value; } }
-
-        private readonly ILawyerService serviceI;
-
-        private readonly IMainService serviceM;
 
         private int? id;
 
-        public FormTakeRequestInWork(ILawyerService serviceI, IMainService serviceM)
+        public FormTakeRequestInWork()
         {
             InitializeComponent();
             Loaded += FormTakeRequestInWork_Load;
-            this.serviceI = serviceI;
-            this.serviceM = serviceM;
         }
 
         private void FormTakeRequestInWork_Load(object sender, EventArgs e)
@@ -42,14 +31,22 @@ namespace AbstractFirmViewWPF
                     MessageBox.Show("Не указана заявка", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     Close();
                 }
-                List<LawyerViewModel> listR = serviceI.GetList();
-                if (listR != null)
+                var response = APIKlient.GetRequest("api/Lawyer/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    comboBoxLawyer.DisplayMemberPath = "LawyerFIO";
-                    comboBoxLawyer.SelectedValuePath = "Id";
-                    comboBoxLawyer.ItemsSource = listR;
-                    comboBoxLawyer.SelectedItem = null;
+                    List<LawyerViewModel> list = APIKlient.GetElement<List<LawyerViewModel>>(response);
+                    if (list != null)
+                    {
+                        comboBoxLawyer.DisplayMemberPath = "LawyerFIO";
+                        comboBoxLawyer.SelectedValuePath = "Id";
+                        comboBoxLawyer.ItemsSource = list;
+                        comboBoxLawyer.SelectedItem = null;
 
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIKlient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -67,14 +64,21 @@ namespace AbstractFirmViewWPF
             }
             try
             {
-                serviceM.TakeRequestInWork(new RequestBindingModel
+                var response = APIKlient.PostRequest("api/Main/TakeRequestInWork", new RequestBindingModel
                 {
                     Id = id.Value,
                     LawyerId = ((LawyerViewModel)comboBoxLawyer.SelectedItem).Id,
                 });
-                MessageBox.Show("Сохранение прошло успешно", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APIKlient.GetError(response));
+                }
             }
             catch (Exception ex)
             {

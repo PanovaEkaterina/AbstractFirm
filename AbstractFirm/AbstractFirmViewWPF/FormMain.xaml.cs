@@ -1,13 +1,11 @@
 ﻿using AbstractFirmService.BindingModel;
-using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
+using AbstractFirmView;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractFirmViewWPF
 {
@@ -16,34 +14,32 @@ namespace AbstractFirmViewWPF
     /// </summary>
     public partial class FormMain : Window
     {
-
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IMainService service;
-
-        private readonly IReportService reportService;
-
-        public FormMain(IMainService service, IReportService reportService)
+        public FormMain()
         {
             InitializeComponent();
-            this.service = service;
-            this.reportService = reportService;
         }
 
         private void LoadData()
         {
             try
             {
-                List<RequestViewModel> list = service.GetList();
-                if (list != null)
+                var response = APIKlient.GetRequest("api/Main/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    dataGridViewMain.ItemsSource = list;
-                    dataGridViewMain.Columns[0].Visibility = Visibility.Hidden;
-                    dataGridViewMain.Columns[1].Visibility = Visibility.Hidden;
-                    dataGridViewMain.Columns[3].Visibility = Visibility.Hidden;
-                    dataGridViewMain.Columns[5].Visibility = Visibility.Hidden;
-                    dataGridViewMain.Columns[1].Width = DataGridLength.Auto;
+                    List<RequestViewModel> list = APIKlient.GetElement<List<RequestViewModel>>(response);
+                    if (list != null)
+                    {
+                        dataGridViewMain.ItemsSource = list;
+                        dataGridViewMain.Columns[0].Visibility = Visibility.Hidden;
+                        dataGridViewMain.Columns[1].Visibility = Visibility.Hidden;
+                        dataGridViewMain.Columns[3].Visibility = Visibility.Hidden;
+                        dataGridViewMain.Columns[5].Visibility = Visibility.Hidden;
+                        dataGridViewMain.Columns[1].Width = DataGridLength.Auto;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIKlient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -54,43 +50,43 @@ namespace AbstractFirmViewWPF
 
         private void клиентыToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormKlients>();
+            var form = new FormKlients();
             form.ShowDialog();
         }
 
         private void бланкиToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormBlanks>();
+            var form = new FormBlanks();
             form.ShowDialog();
         }
 
         private void пакетдокументовToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormPackages>();
+            var form = new FormPackages();
             form.ShowDialog();
         }
 
         private void архивыToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormArchives>();
+            var form = new FormArchives();
             form.ShowDialog();
         }
 
         private void юристыToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormLawyers>();
+            var form = new FormLawyers();
             form.ShowDialog();
         }
 
         private void пополнитьАрхивToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormPutOnArchive>();
+            var form = new FormPutOnArchive();
             form.ShowDialog();
         }
 
         private void buttonCreateRequest_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormCreateRequest>();
+            var form = new FormCreateRequest();
             form.ShowDialog();
             LoadData();
         }
@@ -99,8 +95,11 @@ namespace AbstractFirmViewWPF
         {
             if (dataGridViewMain.SelectedItem != null)
             {
-                var form = Container.Resolve<FormTakeRequestInWork>();
-                form.Id = ((RequestViewModel)dataGridViewMain.SelectedItem).Id;
+                var form = new FormTakeRequestInWork
+                {
+                    Id = ((RequestViewModel)dataGridViewMain.SelectedItem).Id
+                };
+                              
                 form.ShowDialog();
                 LoadData();
             }
@@ -113,8 +112,18 @@ namespace AbstractFirmViewWPF
                 int id = ((RequestViewModel)dataGridViewMain.SelectedItem).Id;
                 try
                 {
-                    service.FinishRequest(id);
-                    LoadData();
+                    var response = APIKlient.PostRequest("api/Main/FinishRequest", new RequestBindingModel
+                    {
+                        Id = id
+                    });
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        LoadData();
+                    }
+                    else
+                    {
+                        throw new Exception(APIKlient.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -130,8 +139,18 @@ namespace AbstractFirmViewWPF
                 int id = ((RequestViewModel)dataGridViewMain.SelectedItem).Id;
                 try
                 {
-                    service.PayRequest(id);
-                    LoadData();
+                    var response = APIKlient.PostRequest("api/Main/.PayRequest", new RequestBindingModel
+                    {
+                        Id = id
+                    });
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        LoadData();
+                    }
+                    else
+                    {
+                        throw new Exception(APIKlient.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -155,11 +174,18 @@ namespace AbstractFirmViewWPF
             {
                 try
                 {
-                    reportService.SavePackagePrice(new ReportBindingModel
+                    var response = APIKlient.PostRequest("api/Report/SavePackagePrice", new ReportBindingModel
                     {
                         FileName = sfd.FileName
                     });
-                    MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        throw new Exception(APIKlient.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -170,13 +196,13 @@ namespace AbstractFirmViewWPF
 
         private void загруженностьСкладовToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormArchivesLoad>();
+            var form = new FormArchivesLoad();
             form.ShowDialog();
         }
 
         private void заказыКлиентовToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormKlientRequests>();
+            var form = new FormKlientRequests();
             form.ShowDialog();
         }
     }

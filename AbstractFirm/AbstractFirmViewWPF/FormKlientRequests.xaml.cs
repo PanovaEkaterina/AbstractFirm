@@ -1,11 +1,11 @@
 ﻿using AbstractFirmService.BindingModel;
-using AbstractFirmService.Interfaces;
+using AbstractFirmService.ViewModel;
+using AbstractFirmView;
 using Microsoft.Reporting.WinForms;
 using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.Windows;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractFirmViewWPF
 {
@@ -14,15 +14,9 @@ namespace AbstractFirmViewWPF
     /// </summary>
     public partial class FormKlientRequests : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IReportService service;
-
-        public FormKlientRequests(IReportService service)
+        public FormKlientRequests()
         {
             InitializeComponent();
-            this.service = service;
         }
 
         private void buttonMake_Click(object sender, EventArgs e)
@@ -41,13 +35,21 @@ namespace AbstractFirmViewWPF
                 reportViewer.LocalReport.SetParameters(parameter);
 
 
-                var dataSource = service.GetKlientRequests(new ReportBindingModel
+                var response = APIKlient.PostRequest("api/Report/GetKlientRequests", new ReportBindingModel
                 {
                     DateFrom = dateTimePickerFrom.SelectedDate,
                     DateTo = dateTimePickerTo.SelectedDate
                 });
-                ReportDataSource source = new ReportDataSource("DataSetRequests", dataSource);
-                reportViewer.LocalReport.DataSources.Add(source);
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    var dataSource = APIKlient.GetElement<List<KlientRequestsModel>>(response);
+                    ReportDataSource source = new ReportDataSource("DataSetRequests", dataSource);
+                    reportViewer.LocalReport.DataSources.Add(source);
+                }
+                else
+                {
+                    throw new Exception(APIKlient.GetError(response));
+                }
 
 
 
@@ -77,13 +79,20 @@ namespace AbstractFirmViewWPF
             {
                 try
                 {
-                    service.SaveKlientRequests(new ReportBindingModel
+                    var response = APIKlient.PostRequest("api/Report/SaveKlientRequests", new ReportBindingModel
                     {
                         FileName = sfd.FileName,
                         DateFrom = dateTimePickerFrom.SelectedDate,
                         DateTo = dateTimePickerTo.SelectedDate
                     });
-                    MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        throw new Exception(APIKlient.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {

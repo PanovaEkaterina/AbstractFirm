@@ -1,12 +1,13 @@
 ﻿using AbstractFirmService.BindingModel;
-using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
+using AbstractFirmView;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using Unity;
-using Unity.Attributes;
+
 
 namespace AbstractFirmViewWPF
 {
@@ -15,21 +16,15 @@ namespace AbstractFirmViewWPF
     /// </summary>
     public partial class FormPackage : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public int Id { set { id = value; } }
-
-        private readonly IPackageService service;
 
         private int? id;
 
         private List<PackageBlankViewModel> packageBlanks;
 
-        public FormPackage(IPackageService service)
+        public FormPackage()
         {
             InitializeComponent();
-            this.service = service;
             Loaded += FormPackage_Load;
         }
 
@@ -39,13 +34,18 @@ namespace AbstractFirmViewWPF
             {
                 try
                 {
-                    PackageViewModel view = service.GetElement(id.Value);
-                    if (view != null)
+                    var response = APIKlient.GetRequest("api/Package/Get/" + id.Value);
+                    if (response.Result.IsSuccessStatusCode)
                     {
-                        textBoxName.Text = view.PackageName;
-                        textBoxPrice.Text = view.Price.ToString();
-                        packageBlanks = view.PackageBlanks;
+                        var product = APIKlient.GetElement<PackageViewModel>(response);
+                        textBoxName.Text = product.PackageName;
+                        textBoxPrice.Text = product.Price.ToString();
+                        packageBlanks = product.PackageBlanks;
                         LoadData();
+                    }
+                    else
+                    {
+                        throw new Exception(APIKlient.GetError(response));
                     }
                 }
                 catch (Exception ex)
@@ -54,7 +54,9 @@ namespace AbstractFirmViewWPF
                 }
             }
             else
+            {
                 packageBlanks = new List<PackageBlankViewModel>();
+            }
         }
 
         private void LoadData()
@@ -79,7 +81,7 @@ namespace AbstractFirmViewWPF
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormPackageBlank>();
+            var form = new FormPackageBlank();
             if (form.ShowDialog() == true)
             {
                 if (form.Model != null)
@@ -96,7 +98,7 @@ namespace AbstractFirmViewWPF
         {
             if (dataGridViewPackage.SelectedItem != null)
             {
-                var form = Container.Resolve<FormPackageBlank>();
+                var form = new FormPackageBlank();
                 form.Model = packageBlanks[dataGridViewPackage.SelectedIndex];
                 if (form.ShowDialog() == true)
                 {
@@ -161,9 +163,10 @@ namespace AbstractFirmViewWPF
                         Count = packageBlanks[i].Count
                     });
                 }
+                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    service.UpdElement(new PackageBindingModel
+                    response = APIKlient.PostRequest("api/Package/UpdElement", new PackageBindingModel
                     {
                         Id = id.Value,
                         PackageName = textBoxName.Text,
@@ -173,16 +176,23 @@ namespace AbstractFirmViewWPF
                 }
                 else
                 {
-                    service.AddElement(new PackageBindingModel
+                    response = APIKlient.PostRequest("api/Package/AddElement", new PackageBindingModel
                     {
                         PackageName = textBoxName.Text,
                         Price = Convert.ToInt32(textBoxPrice.Text),
                         PackageBlanks = productComponentBM
                     });
                 }
-                MessageBox.Show("Сохранение прошло успешно", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APIKlient.GetError(response));
+                }
             }
             catch (Exception ex)
             {

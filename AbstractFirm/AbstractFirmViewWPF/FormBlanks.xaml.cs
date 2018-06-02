@@ -1,11 +1,10 @@
-﻿using AbstractFirmService.Interfaces;
+﻿using AbstractFirmService.BindingModel;
 using AbstractFirmService.ViewModel;
+using AbstractFirmView;
 using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractFirmViewWPF
 {
@@ -14,16 +13,10 @@ namespace AbstractFirmViewWPF
     /// </summary>
     public partial class FormBlanks : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IBlankService service;
-
-        public FormBlanks(IBlankService service)
+        public FormBlanks()
         {
             InitializeComponent();
             Loaded += FormBlanks_Load;
-            this.service = service;
         }
 
         private void FormBlanks_Load(object sender, EventArgs e)
@@ -35,12 +28,20 @@ namespace AbstractFirmViewWPF
         {
             try
             {
-                List<BlankViewModel> list = service.GetList();
-                if (list != null)
+                var response = APIKlient.GetRequest("api/Blank/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    dataGridViewBlanks.ItemsSource = list;
-                    dataGridViewBlanks.Columns[0].Visibility = Visibility.Hidden;
-                    dataGridViewBlanks.Columns[1].Width = DataGridLength.Auto;
+                    List<BlankViewModel> list = APIKlient.GetElement<List<BlankViewModel>>(response);
+                    if (list != null)
+                    {
+                        dataGridViewBlanks.ItemsSource = list;
+                        dataGridViewBlanks.Columns[0].Visibility = Visibility.Hidden;
+                        dataGridViewBlanks.Columns[1].Width = DataGridLength.Auto;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIKlient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -51,7 +52,7 @@ namespace AbstractFirmViewWPF
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormBlank>();
+            var form = new FormBlank();
             if (form.ShowDialog() == true)
                 LoadData();
         }
@@ -60,7 +61,7 @@ namespace AbstractFirmViewWPF
         {
             if (dataGridViewBlanks.SelectedItem != null)
             {
-                var form = Container.Resolve<FormBlank>();
+                var form = new FormBlank();
                 form.Id = ((BlankViewModel)dataGridViewBlanks.SelectedItem).Id;
                 if (form.ShowDialog() == true)
                     LoadData();
@@ -77,7 +78,11 @@ namespace AbstractFirmViewWPF
                     int id = ((BlankViewModel)dataGridViewBlanks.SelectedItem).Id;
                     try
                     {
-                        service.DelElement(id);
+                        var response = APIKlient.PostRequest("api/Blank/DelElement", new KlientBindingModel { Id = id });
+                        if (!response.Result.IsSuccessStatusCode)
+                        {
+                            throw new Exception(APIKlient.GetError(response));
+                        }
                     }
                     catch (Exception ex)
                     {

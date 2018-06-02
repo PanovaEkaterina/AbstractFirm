@@ -1,12 +1,11 @@
 ﻿using AbstractFirmService.BindingModel;
 using AbstractFirmService.Interfaces;
 using AbstractFirmService.ViewModel;
+using AbstractFirmView;
 using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractFirmViewWPF
 {
@@ -15,45 +14,49 @@ namespace AbstractFirmViewWPF
     /// </summary>
     public partial class FormCreateRequest : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IKlientService serviceC;
-
-        private readonly IPackageService serviceP;
-
-        private readonly IMainService serviceM;
-
-        public FormCreateRequest(IKlientService serviceC, IPackageService serviceP, IMainService serviceM)
+        public FormCreateRequest()
         {
             InitializeComponent();
             Loaded += FormCreateRequest_Load;
             comboBoxPackage.SelectionChanged += comboBoxPackage_SelectedIndexChanged;
             comboBoxPackage.SelectionChanged += new SelectionChangedEventHandler(comboBoxPackage_SelectedIndexChanged);
-            this.serviceC = serviceC;
-            this.serviceP = serviceP;
-            this.serviceM = serviceM;
         }
 
         private void FormCreateRequest_Load(object sender, EventArgs e)
         {
             try
             {
-                List<KlientViewModel> listC = serviceC.GetList();
-                if (listC != null)
+                var responseC = APIKlient.GetRequest("api/Klient/GetList");
+                if (responseC.Result.IsSuccessStatusCode)
                 {
-                    comboBoxClient.DisplayMemberPath = "KlientFIO";
-                    comboBoxClient.SelectedValuePath = "Id";
-                    comboBoxClient.ItemsSource = listC;
-                    comboBoxClient.SelectedItem = null;
+                    List<KlientViewModel> list = APIKlient.GetElement<List<KlientViewModel>>(responseC);
+                    if (list != null)
+                    {
+                        comboBoxClient.DisplayMemberPath = "KlientFIO";
+                        comboBoxClient.SelectedValuePath = "Id";
+                        comboBoxClient.ItemsSource = list;
+                        comboBoxClient.SelectedItem = null;
+                    }
                 }
-                List<PackageViewModel> listP = serviceP.GetList();
-                if (listP != null)
+                else
                 {
-                    comboBoxPackage.DisplayMemberPath = "PackageName";
-                    comboBoxPackage.SelectedValuePath = "Id";
-                    comboBoxPackage.ItemsSource = listP;
-                    comboBoxPackage.SelectedItem = null;
+                    throw new Exception(APIKlient.GetError(responseC));
+                }
+                var responseP = APIKlient.GetRequest("api/Package/GetList");
+                if (responseP.Result.IsSuccessStatusCode)
+                {
+                    List<PackageViewModel> list = APIKlient.GetElement<List<PackageViewModel>>(responseP);
+                    if (list != null)
+                    {
+                        comboBoxPackage.DisplayMemberPath = "PackageName";
+                        comboBoxPackage.SelectedValuePath = "Id";
+                        comboBoxPackage.ItemsSource = list;
+                        comboBoxPackage.SelectedItem = null;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIKlient.GetError(responseP));
                 }
             }
             catch (Exception ex)
@@ -69,9 +72,17 @@ namespace AbstractFirmViewWPF
                 try
                 {
                     int id = ((PackageViewModel)comboBoxPackage.SelectedItem).Id;
-                    PackageViewModel product = serviceP.GetElement(id);
-                    int count = Convert.ToInt32(textBoxCount.Text);
-                    textBoxSum.Text = (count * product.Price).ToString();
+                    var responseP = APIKlient.GetRequest("api/Product/Get/" + id);
+                    if (responseP.Result.IsSuccessStatusCode)
+                    {
+                        PackageViewModel product = APIKlient.GetElement<PackageViewModel>(responseP);
+                        int count = Convert.ToInt32(textBoxCount.Text);
+                        textBoxSum.Text = (count * (int)product.Price).ToString();
+                    }
+                    else
+                    {
+                        throw new Exception(APIKlient.GetError(responseP));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -109,16 +120,23 @@ namespace AbstractFirmViewWPF
             }
             try
             {
-                serviceM.CreateRequest(new RequestBindingModel
+                var response = APIKlient.PostRequest("api/Main/CreateRequest", new RequestBindingModel
                 {
-                    KlientId = ((KlientViewModel)comboBoxClient.SelectedItem).Id,
-                    PackageId = ((PackageViewModel)comboBoxPackage.SelectedItem).Id,
+                    KlientId = Convert.ToInt32(comboBoxClient.SelectedValue),
+                    PackageId = Convert.ToInt32(comboBoxPackage.SelectedValue),
                     Count = Convert.ToInt32(textBoxCount.Text),
                     Sum = Convert.ToInt32(textBoxSum.Text)
                 });
-                MessageBox.Show("Сохранение прошло успешно", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APIKlient.GetError(response));
+                }
             }
             catch (Exception ex)
             {

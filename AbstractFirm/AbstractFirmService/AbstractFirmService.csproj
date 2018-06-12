@@ -51,6 +51,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
@@ -67,6 +68,7 @@
     <Compile Include="BindingModel\BlankBindingModel.cs" />
     <Compile Include="BindingModel\KlientBindingModel.cs" />
     <Compile Include="BindingModel\LawyerBindingModel.cs" />
+    <Compile Include="BindingModel\MessageInfoBindingModel.cs" />
     <Compile Include="BindingModel\PackageBindingModel.cs" />
     <Compile Include="BindingModel\PackageBlankBindingModel.cs" />
     <Compile Include="BindingModel\ReportBindingModel.cs" />
@@ -77,6 +79,7 @@
     <Compile Include="ImplementationsBD\KlientServiceBD .cs" />
     <Compile Include="ImplementationsBD\LawyerServiceBD.cs" />
     <Compile Include="ImplementationsBD\MainServiceBD .cs" />
+    <Compile Include="ImplementationsBD\MessageInfoServiceBD.cs" />
     <Compile Include="ImplementationsBD\PackageServiceBD.cs" />
     <Compile Include="ImplementationsBD\ReportServiceBD.cs" />
     <Compile Include="ImplementationsList\ArchiveServiceList.cs" />
@@ -90,11 +93,20 @@
     <Compile Include="Interfaces\IKlientService.cs" />
     <Compile Include="Interfaces\ILawyerService.cs" />
     <Compile Include="Interfaces\IMainService.cs" />
+    <Compile Include="Interfaces\IMessageInfoService.cs" />
     <Compile Include="Interfaces\IPackageService.cs" />
     <Compile Include="Interfaces\IReportService.cs" />
-    <Compile Include="Migrations\201805061644228_FirstMigration.cs" />
-    <Compile Include="Migrations\201805061644228_FirstMigration.Designer.cs">
-      <DependentUpon>201805061644228_FirstMigration.cs</DependentUpon>
+    <Compile Include="Migrations\201806121659226_FirstMigraton.cs" />
+    <Compile Include="Migrations\201806121659226_FirstMigraton.Designer.cs">
+      <DependentUpon>201806121659226_FirstMigraton.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201806121702363_AddFieldInKlient.cs" />
+    <Compile Include="Migrations\201806121702363_AddFieldInKlient.Designer.cs">
+      <DependentUpon>201806121702363_AddFieldInKlient.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201806121713474_AddTableMessageInfo.cs" />
+    <Compile Include="Migrations\201806121713474_AddTableMessageInfo.Designer.cs">
+      <DependentUpon>201806121713474_AddTableMessageInfo.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -110,6 +122,7 @@
     <Compile Include="ViewModel\KlientRequestsModel.cs" />
     <Compile Include="ViewModel\KlientViewModel.cs" />
     <Compile Include="ViewModel\LawyerViewModel.cs" />
+    <Compile Include="ViewModel\MessageInfoViewModel.cs" />
     <Compile Include="ViewModel\PackageBlankViewModel.cs" />
     <Compile Include="ViewModel\PackageViewModel.cs" />
     <Compile Include="ViewModel\RequestViewModel.cs" />
@@ -126,8 +139,14 @@
     <None Include="Resources\TIMCYR.ttf" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\201805061644228_FirstMigration.resx">
-      <DependentUpon>201805061644228_FirstMigration.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201806121659226_FirstMigraton.resx">
+      <DependentUpon>201806121659226_FirstMigraton.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201806121702363_AddFieldInKlient.resx">
+      <DependentUpon>201806121702363_AddFieldInKlient.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201806121713474_AddTableMessageInfo.resx">
+      <DependentUpon>201806121713474_AddTableMessageInfo.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

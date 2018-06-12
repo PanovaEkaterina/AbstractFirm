@@ -5,12 +5,15 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AbstractFirmViewWPF"
         mc:Ignorable="d"
-        Title="Создание клиента" Height="114.777" Width="308.777" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+        Title="Создание клиента" Height="291.949" Width="578.387" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
     <Grid>
         <Label x:Name="labelFIO" Content="ФИО:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
         <TextBox x:Name="textBoxFullName" HorizontalAlignment="Left" Height="23" Margin="54,13,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="228"/>
-        <Button x:Name="buttonSave" Content="Сохранить" HorizontalAlignment="Left" Margin="114,46,0,0" VerticalAlignment="Top" Width="75" Click="buttonSave_Click"/>
-        <Button x:Name="buttonCancel" Content="Отмена" HorizontalAlignment="Left" Margin="207,46,0,0" VerticalAlignment="Top" Width="75" Click="buttonCancel_Click"/>
-
+        <Button x:Name="buttonSave" Content="Сохранить" HorizontalAlignment="Left" Margin="385,232,0,0" VerticalAlignment="Top" Width="75" Click="buttonSave_Click"/>
+        <Button x:Name="buttonCancel" Content="Отмена" HorizontalAlignment="Left" Margin="485,232,0,0" VerticalAlignment="Top" Width="75" Click="buttonCancel_Click"/>
+        <TextBox x:Name="textBoxMail" HorizontalAlignment="Left" Height="23" Margin="341,13,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="219"/>
+        <Label Content="Почта" HorizontalAlignment="Left" Margin="297,10,0,0" VerticalAlignment="Top" Width="68"/>
+        <DataGrid x:Name="dataGridView" HorizontalAlignment="Left" Height="161" Margin="0,66,0,0" VerticalAlignment="Top" Width="568"/>
+        <Label Content="Почта" HorizontalAlignment="Left" Margin="0,40,0,0" VerticalAlignment="Top" Width="48"/>
     </Grid>
 </Window>

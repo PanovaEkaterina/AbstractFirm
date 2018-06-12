@@ -2,8 +2,10 @@
 using AbstractFirmService.ViewModel;
 using AbstractFirmView;
 using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace AbstractFirmViewWPF
 {
@@ -29,7 +31,12 @@ namespace AbstractFirmViewWPF
                 try
                 {  
                     var klient = Task.Run(() => APIKlient.GetRequestData<KlientViewModel>("api/Klient/Get/" + id.Value)).Result;
-                    textBoxFullName.Text = klient.KlientFIO;          
+                    textBoxFullName.Text = klient.KlientFIO;
+                    textBoxMail.Text = klient.Mail;
+                    dataGridView.ItemsSource = klient.Messages;
+                    dataGridView.Columns[0].Visibility = Visibility.Hidden;
+                    dataGridView.Columns[1].Visibility = Visibility.Hidden;
+                    dataGridView.Columns[4].Width = DataGridLength.Auto;
                 }
                 catch (Exception ex)
                 {
@@ -50,20 +57,32 @@ namespace AbstractFirmViewWPF
                 return;
             }
             string fio = textBoxFullName.Text;
+            string mail = textBoxMail.Text;
+            if (!string.IsNullOrEmpty(mail))
+            {
+                if (!Regex.IsMatch(mail, @"^(?("")(""[^""]+?""@)|(([0-9a-z]((\.(?!\.))|[-!#\$%&'\*\+/=\?\^`\{\}\|~\w])*)(?<=[0-9a-z])@))" +
+                @"(?(\[)(\[(\d{1,3}\.){3}\d{1,3}\])|(([0-9a-z][-\w]*[0-9a-z]*\.)+[a-z0-9]{2,17}))$"))
+                {
+                    MessageBox.Show("Неверный формат для электронной почты", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+            }
             Task task;
             if (id.HasValue)
             {
                 task = Task.Run(() => APIKlient.PostRequestData("api/Klient/UpdElement", new KlientBindingModel
                 {
                     Id = id.Value,
-                    KlientFIO = fio
+                    KlientFIO = fio,
+                    Mail = mail
                 }));
             }
             else
             {
                 task = Task.Run(() => APIKlient.PostRequestData("api/Klient/AddElement", new KlientBindingModel
                 {
-                    KlientFIO = fio
+                    KlientFIO = fio,
+                    Mail = mail
                 }));
             }
 

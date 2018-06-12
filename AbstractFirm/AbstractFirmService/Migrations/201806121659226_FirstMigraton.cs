@@ -3,7 +3,7 @@ namespace AbstractFirmService.Migrations
     using System;
     using System.Data.Entity.Migrations;
     
-    public partial class FirstMigration : DbMigration
+    public partial class FirstMigraton : DbMigration
     {
         public override void Up()
         {

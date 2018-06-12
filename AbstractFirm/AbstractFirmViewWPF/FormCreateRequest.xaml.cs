@@ -40,7 +40,7 @@ namespace AbstractFirmViewWPF
                 { 
                         comboBoxPackage.DisplayMemberPath = "PackageName";
                         comboBoxPackage.SelectedValuePath = "Id";
-                        comboBoxPackage.ItemsSource = list;
+                        comboBoxPackage.ItemsSource = listP;
                         comboBoxPackage.SelectedItem = null;
                 }
             }

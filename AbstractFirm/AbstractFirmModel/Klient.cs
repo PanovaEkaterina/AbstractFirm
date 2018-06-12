@@ -11,6 +11,8 @@ namespace AbstractFirmModel
         [Required]
         public string KlientFIO { get; set; }
 
+        public string Mail { get; set; }
+
         [ForeignKey("KlientId")]
         public virtual List<Request> Requests { get; set; }
     }

@@ -19,6 +19,7 @@ namespace AbstractFirmViewWPF
         public FormPackageBlank()
         {
             InitializeComponent();
+            Loaded += FormPackageBlank_Load;
         }
 
         private void FormPackageBlank_Load(object sender, EventArgs e)

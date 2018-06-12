@@ -23,7 +23,8 @@ namespace AbstractFirmService.ImplementationsBD
                 .Select(rec => new KlientViewModel
                 {
                     Id = rec.Id,
-                    KlientFIO = rec.KlientFIO
+                    KlientFIO = rec.KlientFIO,
+                    Mail = rec.Mail
                 })
                 .ToList();
             return result;
@@ -37,7 +38,18 @@ namespace AbstractFirmService.ImplementationsBD
                 return new KlientViewModel
                 {
                     Id = element.Id,
-                    KlientFIO = element.KlientFIO
+                    KlientFIO = element.KlientFIO,
+                    Mail = element.Mail,
+                    Messages = context.MessageInfos
+                            .Where(recM => recM.KlientId == element.Id)
+                            .Select(recM => new MessageInfoViewModel
+                            {
+                                MessageId = recM.MessageId,
+                                DateDelivery = recM.DateDelivery,
+                                Subject = recM.Subject,
+                                Body = recM.Body
+                            })
+                            .ToList()
                 };
             }
             throw new Exception("Элемент не найден");
@@ -52,7 +64,8 @@ namespace AbstractFirmService.ImplementationsBD
             }
             context.Klients.Add(new Klient
             {
-                KlientFIO = model.KlientFIO
+                KlientFIO = model.KlientFIO,
+                Mail = model.Mail
             });
             context.SaveChanges();
         }
@@ -71,6 +84,7 @@ namespace AbstractFirmService.ImplementationsBD
                 throw new Exception("Элемент не найден");
             }
             element.KlientFIO = model.KlientFIO;
+            element.Mail = model.Mail;
             context.SaveChanges();
         }
 

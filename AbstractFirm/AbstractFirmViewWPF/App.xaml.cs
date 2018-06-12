@@ -14,6 +14,7 @@ namespace AbstractFirmViewWPF
         public static void Main()
         {
             APIKlient.Connect();
+            MailKlient.Connect();
             var application = new App();
             application.Run(new FormMain());
         }

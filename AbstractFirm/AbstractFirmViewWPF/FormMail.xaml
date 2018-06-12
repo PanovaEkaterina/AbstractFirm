@@ -1,0 +1,13 @@
+﻿<Window x:Class="AbstractFirmViewWPF.FormMail"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AbstractFirmViewWPF"
+        mc:Ignorable="d"
+        Title="Письма" Height="450" Width="895.474">
+    <Grid Margin="0,-24,2,-21">
+        <DataGrid x:Name="dataGridView" Height="419" Margin="0,35,10,0" VerticalAlignment="Top" ColumnWidth="SizeToHeader"/>
+
+    </Grid>
+</Window>

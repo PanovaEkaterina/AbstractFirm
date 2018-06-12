@@ -94,12 +94,16 @@
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
-    <ApplicationDefinition Include="App.xaml">
+    <Page Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
-    </ApplicationDefinition>
+    </Page>
     <Compile Include="APIKlient.cs" />
+    <Compile Include="FormMail.xaml.cs">
+      <DependentUpon>FormMail.xaml</DependentUpon>
+    </Compile>
     <Compile Include="HttpErrorMessage.cs" />
+    <Compile Include="MailKlient.cs" />
     <Compile Include="SqlServerTypes\Loader.cs" />
     <Page Include="FormArchive.xaml">
       <SubType>Designer</SubType>
@@ -142,6 +146,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="FormLawyers.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="FormMail.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

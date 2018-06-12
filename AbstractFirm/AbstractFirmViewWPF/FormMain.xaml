@@ -14,7 +14,6 @@
                 <MenuItem Header="Пакеты документов" HorizontalAlignment="Left" Height="28" Width="135" Margin="0,0,-21,0" Click="пакетдокументовToolStripMenuItem_Click"/>
                 <MenuItem Header="Архивы" HorizontalAlignment="Left" Height="28" Width="135" Margin="0,0,-21,0" Click="архивыToolStripMenuItem_Click"/>
                 <MenuItem Header="Юристы" HorizontalAlignment="Left" Height="28" Width="161" Margin="0,0,-21,0" Click="юристыToolStripMenuItem_Click"/>
-
             </MenuItem>
             <MenuItem Header="Пополнить архив" Height="22" Width="135" Click="пополнитьАрхивToolStripMenuItem_Click"/>
             <MenuItem Header="Отчеты" Height="22" Width="105">
@@ -22,6 +21,7 @@
                 <MenuItem Header="Загруженность архивов" Height="28" Margin="0,0,-27,0" Click="загруженностьСкладовToolStripMenuItem_Click"/>
                 <MenuItem Header="Заказы клиентов" Height="28" Margin="0,0,-27,0" Click="заказыКлиентовToolStripMenuItem_Click"/>
             </MenuItem>
+            <MenuItem Header="Письма" Height="22" Width="88" Click="письмаToolStripMenuItem_Click"/>
         </Menu>
         <DataGrid x:Name="dataGridViewMain" HorizontalAlignment="Left" Height="272" Margin="0,27,0,0" VerticalAlignment="Top" Width="880" IsReadOnly="True"/>
         <Button x:Name="buttonCreateRequest" Content="Создать заказ" HorizontalAlignment="Left" Margin="909,48,0,0" VerticalAlignment="Top" Width="138" Height="28" Click="buttonCreateRequest_Click"/>

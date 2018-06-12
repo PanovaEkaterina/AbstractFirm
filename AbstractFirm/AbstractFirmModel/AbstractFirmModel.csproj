@@ -52,6 +52,7 @@
     <Compile Include="Blank.cs" />
     <Compile Include="Klient.cs" />
     <Compile Include="Lawyer.cs" />
+    <Compile Include="MessageInfo.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="PackageBlank.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

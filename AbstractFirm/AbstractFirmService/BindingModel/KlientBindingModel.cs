@@ -10,5 +10,8 @@ namespace AbstractFirmService.BindingModel
 
         [DataMember]
         public string KlientFIO { get; set; }
+
+        [DataMember]
+        public string Mail { get; set; }
     }
 }

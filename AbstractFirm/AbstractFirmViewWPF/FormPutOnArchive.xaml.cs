@@ -31,12 +31,12 @@ namespace AbstractFirmViewWPF
                         comboBoxBlank.ItemsSource = list;
                         comboBoxBlank.SelectedItem = null;
                     }
-                    List<ArchiveViewModel> listA = Task.Run(() => APIKlient.GetRequestData<List<ArchiveViewModel>>("api/Archive/GetList")).Result;
+                List<ArchiveViewModel> listA = Task.Run(() => APIKlient.GetRequestData<List<ArchiveViewModel>>("api/Archive/GetList")).Result;
                 if (listA != null)
                     {
                         comboBoxArchive.DisplayMemberPath = "ArchiveName";
                         comboBoxArchive.SelectedValuePath = "Id";
-                        comboBoxArchive.ItemsSource = list;
+                        comboBoxArchive.ItemsSource = listA;
                         comboBoxArchive.SelectedItem = null;
                     }
             }
@@ -107,7 +107,5 @@ namespace AbstractFirmViewWPF
         {
             Close();
         }
-
-
     }
 }

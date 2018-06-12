@@ -7,13 +7,13 @@ namespace AbstractFirmService.Migrations
     using System.Resources;
     
     [GeneratedCode("EntityFramework.Migrations", "6.2.0-61023")]
-    public sealed partial class FirstMigration : IMigrationMetadata
+    public sealed partial class AddTableMessageInfo : IMigrationMetadata
     {
-        private readonly ResourceManager Resources = new ResourceManager(typeof(FirstMigration));
+        private readonly ResourceManager Resources = new ResourceManager(typeof(AddTableMessageInfo));
         
         string IMigrationMetadata.Id
         {
-            get { return "201805061644228_FirstMigration"; }
+            get { return "201806121713474_AddTableMessageInfo"; }
         }
         
         string IMigrationMetadata.Source
